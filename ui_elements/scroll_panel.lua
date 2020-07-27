@@ -57,7 +57,7 @@ function scroll_panel:post_init()
     self.main_panel:set_draw_background(false)
     self.main_panel:dock("top")
 
-    self.main_panel:add_hook("on_update", function(this)
+    self.main_panel:add_hook("on_validate", function(this)
         local new_height = self:get_height() * (self:get_height() / self.main_panel:get_height())
         local max_height = self:get_height()
         self.scrollbar:set_height(math.min(new_height, max_height))
@@ -126,6 +126,18 @@ end
 
 function scroll_panel:get_main_panel()
     return self.main_panel
+end
+
+function scroll_panel:scroll_to_bottom()
+    local scroll_panel_h = self:get_height()
+    local main_panel_h = self.main_panel:get_height()
+
+    self.scrollbar:set_pos(0, scroll_panel_h - self.scrollbar:get_height())
+    self.main_panel.y = main_panel_h > scroll_panel_h and scroll_panel_h - main_panel_h or 0
+    self.scroll_y = self.main_panel.y
+
+    print(self.main_panel.y, self.scroll_y)
+    
 end
 
 return scroll_panel

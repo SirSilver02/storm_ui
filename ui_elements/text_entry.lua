@@ -16,7 +16,7 @@ function text_entry:init()
     self.keydown_event_delay = 0.03
 
     self.blink_time_passed = 0
-    self.blink_duration = 0.6
+    self.blink_duration = 0.5
     self.draw_blink_line = false
     self.numeric = false
 
@@ -26,6 +26,7 @@ end
 function text_entry:post_init()
     button.post_init(self)
     
+    self:set_text("")
     self:set_align(5)
     --TODO make line | appear after the text properly
 
@@ -40,6 +41,14 @@ function text_entry:post_init()
             this.time_since_last_keypressed = os.clock()
         elseif key == "return" then
             this:run_hooks("on_enter_pressed")
+        end
+
+        if love.keyboard.isDown("lctrl") then
+            if key == "c" then
+                love.system.setClipboardText(this:get_text())
+            elseif key == "v" then
+                this:set_text(love.system.getClipboardText())
+            end
         end
     end)
 

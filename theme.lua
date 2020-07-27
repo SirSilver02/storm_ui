@@ -16,6 +16,7 @@ local theme = {
 
     label = {
         text_color = math.divide_by_255({255, 255, 255, 255}),
+        text_shadow_color = {0, 0, 0, 0.5},
         font = love.graphics.newFont(18)
     },
 

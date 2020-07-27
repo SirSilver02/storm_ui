@@ -20,9 +20,10 @@ function button:post_init()
 
     self:set_draw_outline(true)
     self:set_hover_enabled(true)
+    self:set_draw_background(true)
 
-    self.hovered_color = self.ui_manager.theme.button.hovered_color
-    self.depressed_color = self.ui_manager.theme.button.depressed_color
+    self.hovered_color = {unpack(self.ui_manager.theme.button.hovered_color)}
+    self.depressed_color = {unpack(self.ui_manager.theme.button.depressed_color)}
 
     self:set_text("text")
     self:set_align(5)

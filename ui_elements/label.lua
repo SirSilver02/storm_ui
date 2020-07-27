@@ -11,6 +11,7 @@ end
 function label:post_init()
     panel.post_init(self)
 
+    self:set_draw_background(false)
     self:set_draw_outline(false)
 
     self.font = self.ui_manager.theme.label.font
@@ -19,17 +20,20 @@ function label:post_init()
     self.rotation = 0
     self.text_object = love.graphics.newText(self.font, self.text)
 
-    self:set_text_color(self.ui_manager.theme.label.text_color)
-    self.text_shadow_color = {0, 0, 0, 0.5}
+    self:set_text_color({unpack(self.ui_manager.theme.label.text_color)})
+    self.text_shadow_color = {unpack(self.ui_manager.theme.label.text_shadow_color)}
 
     self:add_hook("on_validate", function(this)
         this:set_text(this:get_text())
     end)
 end
 
---TODO Make it so it can align at 1, 2, 3
---                                4, 5, 6
---                                7, 8, 9
+function label:size_to_contents()
+    local padding = self:get_dock_padding()
+    self.w = self.font:getWidth(self.text) + padding[1] + padding[3]
+    self.h = self.font:getHeight() + padding[2] + padding[4]
+    self:set_text(self.text)
+end
 
 function label:set_width_internal(w)
     local scale_x, scale_y = self:get_text_scale()
@@ -69,9 +73,10 @@ function label:set_text(text)
     end
 
     local scale_x, scale_y = self:get_text_scale()
+    scale_x = 1
 
     self.text = tostring(text)
-    self.text_object:setf(self.text, self.w / scale_x , self:get_horizontal_align())
+    self.text_object:setf(self.text, self.w / scale_x, self:get_horizontal_align())
 end
 
 function label:get_font()
@@ -109,18 +114,6 @@ function label:get_dropshadow()
     return self.should_draw_dropshadow
 end
 
---[[
-function label:update(dt)
-    if self.should_reset_text then
-        self:set_text(self:get_text())
-        self.should_reset_text = false
-    end
-
-    if self.should_validate then
-        self.should_reset_text = true
-    end
-end]]
-
 function label:draw_text()
     if not self.text then
         return
@@ -138,7 +131,7 @@ function label:draw_text()
 
     if self.should_draw_dropshadow then
         love.graphics.setColor(self.text_shadow_color)
-        love.graphics.draw(self.text_object, x + 2, y - 2)
+        love.graphics.draw(self.text_object, x + 2, y + 2)
     end
 
     love.graphics.setColor(self.text_color)
@@ -146,7 +139,8 @@ function label:draw_text()
 end
 
 function label:draw()
-   self:draw_text()
+    panel.draw(self)
+    self:draw_text()
 end
 
 return label

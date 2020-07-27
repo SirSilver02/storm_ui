@@ -35,6 +35,8 @@ local panel = require(... .. "/ui_elements/panel")
 local ui_manager = class(panel)
 ui_manager.base_theme = base_theme
 ui_manager.theme = ui_manager.base_theme
+ui_manager.class = class
+ui_manager.tween = tween
 
 function ui_manager.register(element_name, ui_element)
     elements[element_name] = ui_element
@@ -93,6 +95,7 @@ function ui_manager:update_children(dt, mx, my)
         end
 
         local hover_enabled = child:get_hover_enabled()
+
         local sx, sy = child:get_screen_pos()
         local sw, sh = sx + child.w, sy + child.h
 
@@ -131,7 +134,6 @@ function ui_manager:update_children(dt, mx, my)
         child:update(dt)
 
         child:run_hooks("on_update", dt)
-        child:validate()
 
         ui_manager.update_children(child, dt, mx, my)
     end
@@ -142,10 +144,15 @@ function ui_manager:update(dt)
 
     self.hovered_child = nil
 
-    self:validate()
     self:update_children(dt, mx, my)
 
     local hovered_child = self.hovered_child
+
+    if self.last_hovered_child then
+        if self.last_hovered_child ~= hovered_child then
+            self.last_hovered_child:run_hooks("on_hover_end")
+        end
+    end
     
     if hovered_child then
         --If we're hovering over a different child than last frame.
@@ -154,12 +161,6 @@ function ui_manager:update(dt)
         end
     end
  
-    if self.last_hovered_child then
-        if self.last_hovered_child ~= hovered_child then
-            self.last_hovered_child:run_hooks("on_hover_end")
-        end
-    end
-
     self.last_hovered_child = hovered_child
 
     local active_child = self.active_child
@@ -181,6 +182,8 @@ end
 
 function ui_manager:draw()
     local r, g, b, a = love.graphics.getColor()
+
+    self:validate()
     
     love.graphics.setColor(1, 1, 1)
         self:draw_children_of()
@@ -378,12 +381,14 @@ function ui_manager:add(ui_element, ...)
     element.ui_manager = self.ui_manager
     element.type = ui_element
     element.parent = self
-
+    element.z_index = #self.children
+    
     element:post_init()
 
     table.insert(self.children, element)
 
     element.parent:run_hooks("on_add", element)
+    self:invalidate()
 
     return element
 end
@@ -403,6 +408,7 @@ function ui_manager:remove(child)
             end
 
             child:run_hooks("on_remove")
+            parent:run_hooks("on_remove_child", child)
             break
         end
     end

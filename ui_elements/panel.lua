@@ -7,6 +7,7 @@ function panel:init()
     self.y = 0
     self.w = 60
     self.h = 60
+    self.z_index = 0
 
     self.rx = 0
     self.ry = 0
@@ -42,10 +43,18 @@ end
 function panel:post_init()
     local panel_theme = self.ui_manager.theme.panel
 
-    self.background_color = panel_theme.background_color
-    self.outline_color = panel_theme.outline_color
+    self.background_color = {unpack(panel_theme.background_color)}
+    self.outline_color = {unpack(panel_theme.outline_color)}
 
     self.line_width = panel_theme.line_width
+
+    self:add_hook("on_add", function(this)
+        this:sort_children()
+    end)
+
+    self:add_hook("on_remove_child", function(this)
+        this:sort_children()
+    end)
 end
 
 function panel:update(dt)
@@ -62,6 +71,14 @@ function panel:update(dt)
             self.tween = nil
         end
     end
+end
+
+function panel:set_auto_stretch(bool)
+    self.auto_stretch = bool
+end
+
+function panel:get_auto_stretch()
+    return self.auto_stretch
 end
 
 function panel:set_outline_radius(rx, ry)
@@ -112,6 +129,10 @@ function panel:set_background_color(r, g, b, a)
     self.background_color = type(r) == "table" and r or {r, g, b, a}
 end
 
+function panel:set_background_alpha(a)
+    self.background_color[4] = a
+end
+
 function panel:get_outline_color()
     return self.outline_color
 end
@@ -160,6 +181,10 @@ function panel:get_size()
     return self.w, self.h
 end
 
+function panel:get_center()
+    return self.w / 2, self.h / 2
+end
+
 function panel:set_size(w, h, dont_scale)
     local scale_x, scale_y = self.ui_manager:get_scale()
     local scalable = self:get_scalable()
@@ -192,7 +217,6 @@ end
 
 function panel:set_pos(x, y)
     self.x, self.y = x, y
-    self:invalidate_parent()
 end
 
 function panel:get_pos()
@@ -297,6 +321,7 @@ end
 
 function panel:size_to_contents()
     self.should_size_to_contents = true
+    self:invalidate_parent()
 end
 
 function panel:get_draw_outline()
@@ -339,8 +364,16 @@ function panel:set_scalable(is_scalable)
     self.is_scalable = is_scalable
 end
 
-function panel:set_z_pos(z_index) --Lower numbers are drawn first
+function panel:sort_children()
+    table.sort(self.children, function(l, r)
+        return l.z_index < r.z_index
+    end)
+end
 
+function panel:set_z_pos(z_index) --Lower numbers are drawn first
+    self.z_index = z_index
+
+    self:sort_children()
 end
 
 function panel:hide()
@@ -389,13 +422,21 @@ function panel:remove_children()
     local children = self:get_children()
 
     for i = #children, 1, -1 do
-        local child = 
-        children[i]:remove()
+        local child = children[i]:remove()
     end
 end
 
+local dock_enums = {
+    fill = function()
+
+    end,
+}
+
 function panel:validate()
     if self.should_validate then
+        self:run_hooks("on_validate")
+        --firehawk originally had me put it up here, but, it seems to work better withs croll panels if I have it at hte bottom o.O
+
         local padding = self.dock_padding
 
         local bounds = {
@@ -417,7 +458,7 @@ function panel:validate()
                 child.should_center = false
             end
     
-            if self:get_visible() and not (dock_type == "none" or dock_type == "fill") then
+            if child:get_visible() and not (dock_type == "none" or dock_type == "fill") then
                 if dock_type == "top" then
                     child.x = bounds.x + margin[1]
                     child.y = bounds.y + margin[2]
@@ -461,54 +502,54 @@ function panel:validate()
             
                 child:invalidate()
             end
+
+            child:validate()
         end
 
-        self.should_validate = false
-        self:run_hooks("on_validate")
-    end
+        if self.should_size_to_contents then
+            local new_width, new_height = 0, 0
+            local x_margin, y_margin = 0, 0
+            local x_padding, y_padding = self.dock_padding[3], self.dock_padding[4]
+            local dock_type = self.dock_type
 
-    if self.should_size_to_contents then
-        local new_width, new_height = 0, 0
-        local x_margin, y_margin = 0, 0
-        local x_padding, y_padding = self.dock_padding[3], self.dock_padding[4]
-        local dock_type = self.dock_type
+            local count = #self.children
 
-        local count = #self.children
-
-        if not (count == 0) then
-            for i = 1, #self.children do
-                local child = self.children[i]
-                local x, y = child:get_pos()
-                local w, h = child:get_size()
-                local margin = child:get_dock_margin()
-        
-                if x + w > new_width then
-                    new_width = x + w
-                    x_margin = margin[3]
+            if count > 0 then
+                for i = 1, #self.children do
+                    local child = self.children[i]
+                    local x, y = child:get_pos()
+                    local w, h = child:get_size()
+                    local margin = child:get_dock_margin()
+            
+                    if x + w > new_width then
+                        new_width = x + w
+                        x_margin = margin[3]
+                    end
+            
+                    if y + h > new_height then
+                        new_height = y + h
+                        y_margin = margin[4]
+                    end
                 end
-        
-                if y + h > new_height then
-                    new_height = y + h
-                    y_margin = margin[4]
-                end
-            end
-     
-            --TODO: Make sure this isn't completely stupid and bug riddled.
-            --This was a hotfix to get list_views to layout properly.
-            --Problem could actually just be with sizeing to contents in child's on validate 
-            --See list_layout for that
-
-           --if dock_type ~= "top" and dock_type ~= "bottom" and dock_type ~= "fill" then
-                --self.w = new_width + x_margin + x_padding
-            --end
-
-            --if dock_type ~= "fill" then
+    
+                self.w = new_width + x_margin + x_padding
                 self.h = new_height + y_margin + y_padding
-            --end
-        end
+            end
 
-        self.should_size_to_contents = false
+            self.should_size_to_contents = false
+        end
     end
+
+    for i = 1, #self.children do
+        local child = self.children[i]
+        child:validate()
+    end
+
+    if self.should_validate then
+        --self:run_hooks("on_validate")  --moved it down here, idk if this will cause any buggy boys but we'll find out
+    end
+
+    self.should_validate = false
 end
 
 function panel:center()
@@ -542,7 +583,7 @@ function panel:run_hooks(hook_name, ...)
     end
 end
 
-function panel:add_hook(hook_name, func)
+function panel:add_hook(hook_name, id, func)
     local hooks = self.hooks[hook_name]
 
     if not hooks then
@@ -550,21 +591,28 @@ function panel:add_hook(hook_name, func)
         self.hooks[hook_name] = hooks
     end
 
-    hooks[func] = func
+    hooks[id or func] = func or id
 
     return func
 end
 
-function panel:remove_hook(hook_name, func)
+function panel:remove_hook(hook_name, id)
     local hooks = self.hooks[hook_name]
 
     if hooks then
-        hooks[func] = nil
+        hooks[id] = nil
+
+        --if the table is empty, then we delete the hooks table from existence
+        for k, v in pairs(self.hooks[hook_name]) do
+            return
+        end
+
+        self.hooks[hook_name] = nil
     end
 end
 
 function panel:remove_hooks(hook_name)
-    self.hooks[hook_name] = {}
+    self.hooks[hook_name] = nil
 end
 
 function panel:scale(scale_x, scale_y)
@@ -680,7 +728,8 @@ function panel:draw_outline()
         local half_lw = math.ceil(lw / 2)
 
         love.graphics.setLineWidth(self.line_width)
-        love.graphics.rectangle("line", x + half_lw, y + half_lw, w - half_lw * 2, h - half_lw * 2, rx, ry)
+        --love.graphics.rectangle("line", x + half_lw, y + half_lw, w - half_lw * 2, h - half_lw * 2, rx, ry)
+        love.graphics.rectangle("line", x, y, w, h, rx, ry)
         love.graphics.setLineWidth(old_line_width)
     end
 end
