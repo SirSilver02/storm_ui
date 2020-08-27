@@ -140,6 +140,10 @@ function ui_manager:update_children(dt, mx, my)
 end
 
 function ui_manager:update(dt)
+    if not self:is_on_screen() then
+        return
+    end
+
     local mx, my = love.mouse.getPosition()
 
     self.hovered_child = nil
@@ -197,36 +201,41 @@ function ui_manager:draw_children_of()
         local child = self.children[i]
 
         if child:get_visible() then
-            local parent = child
+            if child:is_on_screen() then
 
-            while parent do
-                local x, y = parent:get_screen_pos()
-                local w, h = parent:get_size()
+                child:run_hooks("pre_draw_no_scissor")
 
-                x, y = math.round(x), math.round(y)
-                w, h = math.round(w), math.round(h)
-                --todo replace all this scissor bullshit with stencils?
-                love.graphics.intersectScissor(max(x, 0), max(y, 0), max(w, 0), max(h, 0))
+                local parent = child
 
-                parent = parent:get_parent()
-            end
+                while parent do
+                    local x, y = parent:get_screen_pos()
+                    local w, h = parent:get_size()
 
-            local sx, sy, sw, sh = love.graphics.getScissor()
+                    x, y = math.round(x), math.round(y)
+                    w, h = math.round(w), math.round(h)
+                    
+                    love.graphics.intersectScissor(max(x, 0), max(y, 0), max(w, 0), max(h, 0))
 
-            child:run_hooks("pre_draw")
-                child:draw()
-            child:run_hooks("post_draw")
+                    parent = parent:get_parent()
+                end
 
-            ui_manager.draw_children_of(child)
+                local sx, sy, sw, sh = love.graphics.getScissor()
 
-            love.graphics.setScissor()
+                child:run_hooks("pre_draw")
+                    child:draw()
+                child:run_hooks("post_draw")
 
-            child:run_hooks("post_draw_children")
-
-            --dont want outline to be covered by it's children
-            if child:get_draw_outline() then
-                love.graphics.setColor(child:get_outline_color())
-                child:draw_outline()
+                ui_manager.draw_children_of(child)
+                
+                child:run_hooks("post_draw_children")
+                
+                love.graphics.setScissor()
+                
+                --dont want outline to be covered by it's children
+                if child:get_draw_outline() then
+                    love.graphics.setColor(child:get_outline_color())
+                    child:draw_outline()
+                end
             end
         end
     end
@@ -374,6 +383,7 @@ function ui_manager:resize(w, h)
 
     self.last_width, self.last_height = w, h
     self:invalidate()
+    self:validate()
 end
 
 function ui_manager:add(ui_element, ...)
@@ -389,7 +399,7 @@ function ui_manager:add(ui_element, ...)
 
     element.parent:run_hooks("on_add", element)
     self:invalidate()
-
+    
     return element
 end
 

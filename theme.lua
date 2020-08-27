@@ -11,12 +11,15 @@ local theme = {
     panel = {
         background_color = math.divide_by_255({30, 34, 33, 255}),
         outline_color = math.divide_by_255({0, 0, 0, 255}),
-        line_width = 1
+        outline_width = 1
     },
 
     label = {
-        text_color = math.divide_by_255({255, 255, 255, 255}),
+        text_color = {1, 1, 1, 1},
         text_shadow_color = {0, 0, 0, 0.5},
+        text_outline_color = {0, 0, 0, 1},
+        text_outline_distance = 2,
+        dropshadow_offset = {2, 2},
         font = love.graphics.newFont(18)
     },
 

@@ -7,6 +7,8 @@ function panel:init()
     self.y = 0
     self.w = 60
     self.h = 60
+    self.screen_x = 0
+    self.screen_y = 0
     self.z_index = 0
 
     self.rx = 0
@@ -46,7 +48,7 @@ function panel:post_init()
     self.background_color = {unpack(panel_theme.background_color)}
     self.outline_color = {unpack(panel_theme.outline_color)}
 
-    self.line_width = panel_theme.line_width
+    self.outline_width = panel_theme.outline_width
 
     self:add_hook("on_add", function(this)
         this:sort_children()
@@ -90,12 +92,12 @@ function panel:get_outline_radius()
     return self.rx, self.ry
 end
 
-function panel:set_line_width(width)
-    self.line_width = width
+function panel:set_outline_width(width)
+    self.outline_width = width
 end
 
-function panel:get_line_width()
-    return self.line_width
+function panel:get_outline_width()
+    return self.outline_width
 end
 
 function panel:set_alpha(alpha)
@@ -130,7 +132,8 @@ function panel:set_background_color(r, g, b, a)
 end
 
 function panel:set_background_alpha(a)
-    self.background_color[4] = a
+    local r, g, b = unpack(self.background_color)
+    self.background_color = {r, g, b, a}
 end
 
 function panel:get_outline_color()
@@ -222,8 +225,8 @@ end
 function panel:get_pos()
     return self.x, self.y
 end
-
-function panel:get_screen_pos()
+--[[
+function panel:set_screen_pos()
     local x, y = self.x, self.y
     local parent = self:get_parent()
 
@@ -232,7 +235,15 @@ function panel:get_screen_pos()
         parent = parent:get_parent()
     end
 
-    return x, y
+    self.screen_x, self.screen_y = x, y
+end]]
+
+function panel:set_screen_pos(x, y)
+    self.screen_x, self.screen_y = x, y
+end
+
+function panel:get_screen_pos()
+    return self.screen_x, self.screen_y
 end
 
 function panel:dock(dock_enum)
@@ -322,6 +333,7 @@ end
 function panel:size_to_contents()
     self.should_size_to_contents = true
     self:invalidate_parent()
+    self:invalidate()
 end
 
 function panel:get_draw_outline()
@@ -434,8 +446,7 @@ local dock_enums = {
 
 function panel:validate()
     if self.should_validate then
-        self:run_hooks("on_validate")
-        --firehawk originally had me put it up here, but, it seems to work better withs croll panels if I have it at hte bottom o.O
+        self:run_hooks("pre_validate")
 
         local padding = self.dock_padding
 
@@ -538,15 +549,16 @@ function panel:validate()
 
             self.should_size_to_contents = false
         end
+
+        self:run_hooks("on_validate")
     end
+
+    local screen_x, screen_y = self:get_screen_pos()
 
     for i = 1, #self.children do
         local child = self.children[i]
+        child:set_screen_pos(screen_x + child.x, screen_y + child.y)
         child:validate()
-    end
-
-    if self.should_validate then
-        --self:run_hooks("on_validate")  --moved it down here, idk if this will cause any buggy boys but we'll find out
     end
 
     self.should_validate = false
@@ -720,18 +732,26 @@ end
 function panel:draw_outline()
     if self.should_draw_outline then
         local x, y = self:get_screen_pos()
-        local old_line_width = love.graphics.getLineWidth()
+        local old_outline_width = love.graphics.getLineWidth()
         local rx, ry = self:get_outline_radius()
         local w, h = self:get_size()
 
-        local lw = self.line_width
+        local lw = self.outline_width
         local half_lw = math.ceil(lw / 2)
 
-        love.graphics.setLineWidth(self.line_width)
+        love.graphics.setLineWidth(self.outline_width)
         --love.graphics.rectangle("line", x + half_lw, y + half_lw, w - half_lw * 2, h - half_lw * 2, rx, ry)
         love.graphics.rectangle("line", x, y, w, h, rx, ry)
-        love.graphics.setLineWidth(old_line_width)
+        love.graphics.setLineWidth(old_outline_width)
     end
+end
+
+function panel:is_on_screen()
+    local x, y = self:get_screen_pos()
+    local w, h = self:get_size()
+    local scr_w, scr_h = love.graphics.getDimensions()
+
+    return x + w >= 0 and x < scr_w and y + h >= 0 and y < scr_h
 end
 
 function panel:draw()

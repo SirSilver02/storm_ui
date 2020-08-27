@@ -60,7 +60,8 @@ function scroll_panel:post_init()
     self.main_panel:add_hook("on_validate", function(this)
         local new_height = self:get_height() * (self:get_height() / self.main_panel:get_height())
         local max_height = self:get_height()
-        self.scrollbar:set_height(math.min(new_height, max_height))
+        --self.scrollbar:set_height(math.min(new_height, max_height))
+        self.scrollbar.h = (math.min(new_height, max_height))
 
         this.y = self.scroll_y
     end)
