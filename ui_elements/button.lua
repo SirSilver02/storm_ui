@@ -16,9 +16,11 @@ function button:init()
 end
 
 function button:post_init()
+    local theme = self.ui_manager.theme
+
     label.post_init(self)
 
-    self:set_draw_outline(true)
+    self:set_draw_outline(theme.panel.outline)
     self:set_hover_enabled(true)
     self:set_draw_background(true)
 

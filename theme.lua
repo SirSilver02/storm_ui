@@ -11,7 +11,8 @@ local theme = {
     panel = {
         background_color = math.divide_by_255({30, 34, 33, 255}),
         outline_color = math.divide_by_255({0, 0, 0, 255}),
-        outline_width = 1
+        outline_width = 1,
+        outline = true
     },
 
     label = {
@@ -30,6 +31,10 @@ local theme = {
 
     checkbox = {
         outline_color = math.divide_by_255({100, 100, 100, 100})
+    },
+
+    scroll_panel = {
+        scrollbar_width = 16
     }
 }
 

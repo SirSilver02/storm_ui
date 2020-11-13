@@ -47,6 +47,7 @@ function panel:post_init()
 
     self.background_color = {unpack(panel_theme.background_color)}
     self.outline_color = {unpack(panel_theme.outline_color)}
+    self.should_draw_outline = panel_theme.outline
 
     self.outline_width = panel_theme.outline_width
 
@@ -712,8 +713,7 @@ function panel:draw_image(offset_x, offset_y)
         local w, h = image:getDimensions()
         local scale_x = self.w / w
         local scale_y = self.h / h
-
-        local wider = image:getWidth() > image:getHeight()
+        local scale = scale_x < scale_y and scale_x or scale_y
         local stretch = self.auto_stretch
 
         love.graphics.draw(
@@ -721,8 +721,8 @@ function panel:draw_image(offset_x, offset_y)
             (offset_x or 0) + x + self.w / 2, 
             (offset_y or 0) + y + self.h / 2, 
             0, --rotation
-            (stretch and scale_x) or (wider and scale_x) or scale_y,
-            (stretch and scale_y) or (wider and scale_x) or scale_y,
+            stretch and scale_x or scale, 
+            stretch and scale_y or scale,
             w / 2, 
             h / 2
         )

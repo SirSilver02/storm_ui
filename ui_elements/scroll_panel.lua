@@ -19,7 +19,7 @@ function scroll_panel:post_init()
     self.right_panel = self:add("panel")
     self.right_panel:dock("right")
     self.right_panel:set_scalable(false)
-    self.right_panel:set_width(20)
+    self.right_panel:set_width(self.ui_manager.theme.scroll_panel.scrollbar_width)
 
     self.right_panel:add_hook("on_mousepressed", function(this, x, y, button)
         if button == 1 then
@@ -52,10 +52,13 @@ function scroll_panel:post_init()
         self.scroll_y = self.main_panel.y
     end)
 
-    self.main_panel = self:add("panel")
+    local p = self:add("panel")
+    p:dock("fill")
+
+    self.main_panel = p:add("panel")
     self.main_panel:set_draw_outline(false)
     self.main_panel:set_draw_background(false)
-    self.main_panel:dock("top")
+    self.main_panel:dock("fill")
 
     self.main_panel:add_hook("on_validate", function(this)
         local new_height = self:get_height() * (self:get_height() / self.main_panel:get_height())
@@ -92,6 +95,13 @@ function scroll_panel:post_init()
             local dx, dy = 0, my - self.wheel_scroll_y
 
             self.scrollbar:run_hooks("on_dragged", mx, my, dx, dy / 4)
+        end
+
+        if self.main_panel.h > self.h then
+            self.right_panel:unhide()
+        else
+            self:scroll_to_top()
+            self.right_panel:hide()
         end
     end)
 
@@ -136,9 +146,12 @@ function scroll_panel:scroll_to_bottom()
     self.scrollbar:set_pos(0, scroll_panel_h - self.scrollbar:get_height())
     self.main_panel.y = main_panel_h > scroll_panel_h and scroll_panel_h - main_panel_h or 0
     self.scroll_y = self.main_panel.y
+end
 
-    print(self.main_panel.y, self.scroll_y)
-    
+function scroll_panel:scroll_to_top()
+    self.scrollbar:set_pos(0, 0)
+    self.main_panel.y = 0
+    self.scroll_y = 0
 end
 
 return scroll_panel

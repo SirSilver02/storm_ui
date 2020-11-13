@@ -180,7 +180,7 @@ function ui_manager:update_resolution()
     local ww, wh = love.graphics.getDimensions()
 
     if ww ~= self.last_width or wh ~= self.last_height then
-        self:resize(ww, wh)
+        --self:resize(ww, wh)
     end
 end
 
@@ -202,9 +202,8 @@ function ui_manager:draw_children_of()
 
         if child:get_visible() then
             if child:is_on_screen() then
-
                 child:run_hooks("pre_draw_no_scissor")
-
+                
                 local parent = child
 
                 while parent do
@@ -226,16 +225,18 @@ function ui_manager:draw_children_of()
                 child:run_hooks("post_draw")
 
                 ui_manager.draw_children_of(child)
-                
-                child:run_hooks("post_draw_children")
-                
-                love.graphics.setScissor()
+            
+
                 
                 --dont want outline to be covered by it's children
                 if child:get_draw_outline() then
                     love.graphics.setColor(child:get_outline_color())
                     child:draw_outline()
                 end
+
+                child:run_hooks("post_draw_children")
+
+                love.graphics.setScissor()
             end
         end
     end
@@ -379,9 +380,10 @@ function ui_manager:wheelmoved(x, y)
 end
 
 function ui_manager:resize(w, h)
-    self:scale(w / self.last_width, h / self.last_height)
+    --self:scale(w / self.last_width, h / self.last_height)
 
     self.last_width, self.last_height = w, h
+    self.w, self.h = w, h
     self:invalidate()
     self:validate()
 end
