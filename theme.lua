@@ -12,7 +12,8 @@ local theme = {
         background_color = math.divide_by_255({30, 34, 33, 255}),
         outline_color = math.divide_by_255({0, 0, 0, 255}),
         outline_width = 1,
-        outline = true
+        outline = true,
+        background = true
     },
 
     label = {
@@ -34,7 +35,16 @@ local theme = {
     },
 
     scroll_panel = {
-        scrollbar_width = 16
+        scrollbar_width = 16,
+        scrollbar_color = math.divide_by_255({30, 34, 33, 255}),
+    },
+
+    progress = {
+
+    },
+
+    slider = {
+        
     }
 }
 

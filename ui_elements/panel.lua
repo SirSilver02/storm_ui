@@ -48,6 +48,7 @@ function panel:post_init()
     self.background_color = {unpack(panel_theme.background_color)}
     self.outline_color = {unpack(panel_theme.outline_color)}
     self.should_draw_outline = panel_theme.outline
+    self.should_draw_background = panel_theme.background
 
     self.outline_width = panel_theme.outline_width
 

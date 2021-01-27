@@ -35,13 +35,14 @@ function scroll_panel:post_init()
             self.ui_manager.depressed_child = self.scrollbar
             self.scrollbar.depressed = true
             this.depressed = false
+            --self.ui_manager:set_focus(self.scrollbar)
         end
     end)
     
     self.scrollbar = self.right_panel:add("button")
     self.scrollbar:set_text("")
     self.scrollbar:set_width(self.right_panel:get_width())
-    self.scrollbar:set_background_color(self.scrollbar:get_hovered_color())
+    self.scrollbar:set_background_color(self.ui_manager.theme.scroll_panel.scrollbar_color)
 
     self.scrollbar:add_hook("on_dragged", function(this, x, y, dx, dy)
         local local_x, local_y = this:mouse_to_local(x, y)
@@ -52,7 +53,13 @@ function scroll_panel:post_init()
         self.scroll_y = self.main_panel.y
     end)
 
+    self.right_panel:add_hook("on_dragged", function(this, x, y, dx, dy)
+        self.scrollbar:run_hooks("on_dragged", x, y, dx, dy)
+    end)
+
     local p = self:add("panel")
+    p:set_draw_outline(false)
+    p:set_draw_background(false)
     p:dock("fill")
 
     self.main_panel = p:add("panel")
@@ -96,7 +103,9 @@ function scroll_panel:post_init()
 
             self.scrollbar:run_hooks("on_dragged", mx, my, dx, dy / 4)
         end
+    end)
 
+    self:add_hook("on_update", "hide_right_panel", function(this, dt)
         if self.main_panel.h > self.h then
             self.right_panel:unhide()
         else
@@ -135,8 +144,16 @@ function scroll_panel:add(type)
     return panel.add(self, type)
 end
 
+function scroll_panel:remove_children()
+    self.main_panel:remove_children()
+end
+
 function scroll_panel:get_main_panel()
     return self.main_panel
+end
+
+function scroll_panel:get_children()
+    return self.main_panel:get_children()
 end
 
 function scroll_panel:scroll_to_bottom()
@@ -155,3 +172,5 @@ function scroll_panel:scroll_to_top()
 end
 
 return scroll_panel
+
+--ANYTHING THAT ACTS ON THE CHILDREN OF A SCROLL PANEL NEEDS TO DETOUR TO THE MAIN PANEL

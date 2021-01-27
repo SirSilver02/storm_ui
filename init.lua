@@ -22,6 +22,7 @@ local function register_from_folder(folder_path)
                 local extension_pattern = "%.(.+)"  --Pattern that finds a "." and all other characters after it.
                 local ui_element = require(file_path:gsub(extension_pattern, ""))
                 local element_name = element:gsub(extension_pattern, "")
+                ui_element.element_name = element_name
                 elements[element_name] = ui_element
             end
         end
@@ -35,6 +36,7 @@ local panel = require(... .. "/ui_elements/panel")
 local ui_manager = class(panel)
 ui_manager.base_theme = base_theme
 ui_manager.theme = ui_manager.base_theme
+ui_manager.elements = elements
 ui_manager.class = class
 ui_manager.tween = tween
 
@@ -204,7 +206,8 @@ function ui_manager:draw_children_of()
             if child:is_on_screen() then
                 child:run_hooks("pre_draw_no_scissor")
                 
-                local parent = child
+                --local parent = child
+                local parent = self
 
                 while parent do
                     local x, y = parent:get_screen_pos()
@@ -220,14 +223,23 @@ function ui_manager:draw_children_of()
 
                 local sx, sy, sw, sh = love.graphics.getScissor()
 
+                local x, y = child:get_screen_pos()
+                local w, h = child:get_size()
+
+                x, y = math.round(x), math.round(y)
+                w, h = math.round(w), math.round(h)
+
+                local sx2, sy2, sw2, sh2 = love.graphics.intersectScissor(max(x, 0), max(y, 0), max(w, 0), max(h, 0))
+
                 child:run_hooks("pre_draw")
                     child:draw()
                 child:run_hooks("post_draw")
 
                 ui_manager.draw_children_of(child)
-            
 
-                
+                love.graphics.setScissor()
+                love.graphics.intersectScissor(sx, sy, sw, sh)
+            
                 --dont want outline to be covered by it's children
                 if child:get_draw_outline() then
                     love.graphics.setColor(child:get_outline_color())
@@ -248,13 +260,11 @@ function ui_manager:mousepressed(x, y, button)
     if hovered_child and hovered_child.mouse_enabled then
         self:set_focus(hovered_child)
 
-        if button ~= 3 then
-            hovered_child:run_hooks("on_mousepressed", x, y, button)
-        end
-
         if button == 1 then
             hovered_child.depressed = true
             self.depressed_child = hovered_child
+
+            hovered_child:run_hooks("on_mousepressed", x, y, button)
             
             --pretty much just for buttons
             if hovered_child.last_pressed then
@@ -266,6 +276,8 @@ function ui_manager:mousepressed(x, y, button)
 
                 hovered_child.last_pressed = time
             end
+        elseif button == 2 then
+            hovered_child:run_hooks("on_mousepressed", x, y, button)
         end
 
         if button == 3 then
@@ -476,41 +488,25 @@ function ui_manager:set_theme(theme)
 end
 
 function ui_manager:install(table)
-    local events = {"update", "draw"}
-
-    for _, event in ipairs(events) do
-        local old_event = table[event]
-
-        table[event] = function(...)
-            local _, a, b, c = ...
-
-            if old_event then
-                old_event(...)
-            end
-
-            if self[event] and not self.uninstalled_events[event] then
-                if type(_) == "table" then
-                    self[event](self, a, b, c)
-                else
-                    self[event](self, ...)
-                end
-            end
-        end
-    end
+    local events = {update = true, draw = true}
 
     for event in pairs(love.handlers) do
+        events[event] = true
+    end
+
+    for event in pairs(events) do
         local old_event = table[event]
 
         table[event] = function(...)
+            local _, a, b, c, d, e, f, g = ...
+
             if old_event then
                 old_event(...)
             end
-            
-            if self[event] and not self.uninstalled_events[event] then
-                local _, a, b, c, d, e = ...
 
+            if self[event] and not self.uninstalled_events[event] then
                 if type(_) == "table" then
-                    self[event](self, a, b, c, d, e)
+                    self[event](self, a, b, c, d, e, f, g)
                 else
                     self[event](self, ...)
                 end

@@ -16,7 +16,7 @@ function label:post_init()
 
     self.font = self.ui_manager.theme.label.font
     self.text = "label"
-    self.text_align = 1
+    self.text_align = 7
     self.rotation = 0
     self.text_object = love.graphics.newText(self.font, self.text)
 
@@ -28,10 +28,6 @@ function label:post_init()
 
     self:add_hook("on_validate", function(this)
         this:set_text(this:get_text())
-    end)
-
-    self:add_hook("pre_draw_no_scissor", function(this)
-        this:draw_outline_text()
     end)
 end
 
@@ -47,13 +43,12 @@ function label:size_to_contents()
 
     self:set_text(self.text)
 end
-
+--[[
 function label:set_width_internal(w)
-    local scale_x, scale_y = self:get_text_scale()
-
     panel.set_width_internal(self, w)
-    self.text_object:setf(self.text, w / scale_x, self:need_a_better_name())
+    self.text_object:setf(self.text, w , self:need_a_better_name())
 end
+]]
 
 function label:get_horizontal_align()
     local align = self.text_align
@@ -85,11 +80,10 @@ function label:set_text(text)
         text = ""
     end
 
-    local scale_x, scale_y = self:get_text_scale()
-    scale_x = 1
+    --local outline_distance = self.should_draw_text_outline and self.outline 
 
     self.text = tostring(text)
-    self.text_object:setf(self.text, self.w / scale_x, self:get_horizontal_align())
+    self.text_object:setf(self.text, self.w, self:get_horizontal_align())
 end
 
 function label:get_font()
@@ -167,49 +161,61 @@ function label:get_text_outline_distance()
     return self.text_outline_distance
 end
 
-function label:draw_outline_text()
-    if self.should_draw_text_outline then
-        
-        local text_width = self.text_object:getWidth()
-        local text_height = self.text_object:getHeight()
-        local x, y = self:get_screen_pos()
-
-        if self.text_align > 6 then
-            y =  y + self.h - text_height
-        elseif self.text_align > 3 then
-            y = y + self.h / 2 - text_height / 2
-        end
-    
-        local distance = self:get_text_outline_distance()
-        love.graphics.setColor(self:get_text_outline_color())
-
-        for y2 = -distance, distance do
-            for x2 = -distance, distance do
-                love.graphics.draw(self.text_object, x + x2 , y + y2 )
-            end
-        end
-    end
+local left_offset = function(x, distance)
+    return x + distance
 end
+
+local right_offset = function(x, distance)
+    return x - distance
+end
+
+local x_offset = {
+    [1] = left_offset,
+    [4] = left_offset,
+    [7] = left_offset,
+
+    [3] = right_offset,
+    [6] = right_offset,
+    [9] = right_offset
+}
 
 function label:draw_text()
     if not self.text then
         return
     end
 
-    local text_width = self.text_object:getWidth()
     local text_height = self.text_object:getHeight()
     local x, y = self:get_screen_pos()
 
-    if self.text_align > 6 then
+    if self.text_align < 4 then
         y =  y + self.h - text_height
-    elseif self.text_align > 3 then
+    elseif self.text_align > 3 and self.text_align < 7 then
         y = y + self.h / 2 - text_height / 2
+    end
+
+    if self.should_draw_text_outline then
+        local offset_func = x_offset[self.text_align]
+        
+        if offset_func then
+            x = offset_func(x, self:get_text_outline_distance())
+        end
     end
 
     if self.should_draw_dropshadow then
         local offset = self:get_dropshadow_offset()
         love.graphics.setColor(self.text_shadow_color)
         love.graphics.draw(self.text_object, x + offset[1], y + offset[2])
+    end
+    
+    if self.should_draw_text_outline then
+        local distance = self:get_text_outline_distance()
+        love.graphics.setColor(self:get_text_outline_color())
+
+        for y2 = -distance, distance do
+            for x2 = -distance, distance do
+                love.graphics.draw(self.text_object, x + x2 , y + y2)
+            end
+        end
     end
 
     love.graphics.setColor(self.text_color)
