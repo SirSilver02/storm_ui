@@ -162,11 +162,8 @@ function panel:get_width()
     return self.w
 end
 
-function panel:set_width(w, dont_scale)
-    local scale_x, scale_y = self.ui_manager:get_scale()
-    local scalable = self:get_scalable()
-
-    self.w = not dont_scale and scalable and w * scale_x or w
+function panel:set_width(w)
+    self.w = w
     self:invalidate_parent()
 end
 
@@ -174,11 +171,8 @@ function panel:get_height()
     return self.h
 end
 
-function panel:set_height(h, dont_scale)
-    local scale_x, scale_y = self.ui_manager:get_scale()
-    local scalable = self:get_scalable()
-
-    self.h = not dont_scale and scalable and h * scale_y or h
+function panel:set_height(h)
+    self.h = h
     self:invalidate_parent()
 end
 
@@ -190,13 +184,9 @@ function panel:get_center()
     return self.w / 2, self.h / 2
 end
 
-function panel:set_size(w, h, dont_scale)
-    local scale_x, scale_y = self.ui_manager:get_scale()
-    local scalable = self:get_scalable()
-
-    self.w = (not dont_scale and scalable and w * scale_x) or w
-    self.h = (not dont_scale and scalable and h * scale_y) or h
-
+function panel:set_size(w, h)
+    self.w = w
+    self.h = h
     self:invalidate_parent()
 end
 
@@ -272,7 +262,7 @@ function panel:get_dock_margin()
     return self.dock_margin
 end
 
-function panel:set_dock_margin(left, top, right, bottom, dont_scale)
+function panel:set_dock_margin(left, top, right, bottom)
     self.dock_margin = type(left) == "table" and left or {
         left or 0,
         top or 0,
@@ -628,7 +618,7 @@ end
 function panel:remove_hooks(hook_name)
     self.hooks[hook_name] = nil
 end
-
+--[[
 function panel:scale(scale_x, scale_y)
     if self:get_scalable() then
         local padding = self:get_dock_padding()
@@ -656,6 +646,7 @@ function panel:scale(scale_x, scale_y)
 
     self:run_hooks("on_scaled", scale_x, scale_y)
 end
+]]
 
 function panel:move_to(duration, x, y, move_type, on_finished)
     self.tween = tween.new(duration, self, {x = x, y = y}, move_type)

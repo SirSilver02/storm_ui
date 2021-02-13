@@ -120,11 +120,10 @@ function text_entry:draw()
 
             local x, y = self:get_screen_pos()
             local text = self:get_text()
-            local scale_x, scale_y = self:get_text_scale()
 
             love.graphics.setFont(font)
                 love.graphics.setColor(self:get_text_color())
-                love.graphics.print("|", x + self.w / 2 + font:getWidth(text) * scale_x, y + self.h / 2, 0, scale_x, scale_y, font:getWidth(text) / 2, font:getHeight() / 2)
+                love.graphics.print("|", x + self.w / 2 + font:getWidth(text), y + self.h / 2, 0, 1, 1, font:getWidth(text) / 2, font:getHeight() / 2)
             love.graphics.setFont(previous_font)
         end
     end

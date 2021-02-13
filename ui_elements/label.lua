@@ -112,15 +112,6 @@ function label:get_text_color()
     return self.text_color
 end
 
-function label:get_text_scale()
-    local manager = self.ui_manager
-
-    local scale_x = manager.w / manager.theme.window.designed_width
-    local scale_y = manager.h / manager.theme.window.designed_height
-    
-    return scale_x, scale_y
-end
-
 function label:set_dropshadow(bool)
     self.should_draw_dropshadow = bool
 end

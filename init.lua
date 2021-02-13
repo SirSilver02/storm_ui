@@ -464,13 +464,6 @@ function ui_manager:get_font()
     return self.font
 end
 
-function ui_manager:get_scale()
-    local w, h = love.graphics.getDimensions()
-    local dw, dh = self.theme.window.designed_width, self.theme.window.designed_height
-
-    return w / dw, h / dh
-end
-
 function ui_manager:get_theme()
     return self.theme
 end
