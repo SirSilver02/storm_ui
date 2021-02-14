@@ -25,6 +25,7 @@ function panel:init()
     self.hidden = false
 
     self.hover_enabled = true
+    self.last_hover_enabled = true  --used to keep track of previous state after hiding/unhiding
     self.hovered = false
     self.depressed = false
 
@@ -358,6 +359,7 @@ end
 
 function panel:set_hover_enabled(bool)
     self.hover_enabled = bool
+    self.last_hover_enabled = bool
 end
 
 function panel:get_scalable()
@@ -388,7 +390,7 @@ function panel:hide()
 end
 
 function panel:unhide()
-    self:set_hover_enabled(true)
+    self:set_hover_enabled(self.last_hover_enabled)
     self:set_visible(true)
 
     self.hidden = false

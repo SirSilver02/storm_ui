@@ -174,16 +174,6 @@ function ui_manager:update(dt)
     if active_child and self.depressed_key then
         active_child:run_hooks("on_keydown", self.depressed_key)
     end
-
-    self:update_resolution()
-end
-
-function ui_manager:update_resolution()
-    local ww, wh = love.graphics.getDimensions()
-
-    if ww ~= self.last_width or wh ~= self.last_height then
-        --self:resize(ww, wh)
-    end
 end
 
 function ui_manager:draw()
