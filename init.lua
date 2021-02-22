@@ -146,6 +146,10 @@ function ui_manager:update(dt)
         return
     end
 
+    if self.last_width ~= love.graphics.getWidth() or self.last_width ~= love.graphics.getHeight() then
+        self:resize(love.graphics.getDimensions())
+    end
+
     local mx, my = love.mouse.getPosition()
 
     self.hovered_child = nil
@@ -382,8 +386,6 @@ function ui_manager:wheelmoved(x, y)
 end
 
 function ui_manager:resize(w, h)
-    --self:scale(w / self.last_width, h / self.last_height)
-
     self.last_width, self.last_height = w, h
     self.w, self.h = w, h
     self:invalidate()
