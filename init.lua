@@ -146,7 +146,7 @@ function ui_manager:update(dt)
         return
     end
 
-    if self.last_width ~= love.graphics.getWidth() or self.last_width ~= love.graphics.getHeight() then
+    if self.last_width ~= love.graphics.getWidth() or self.last_height ~= love.graphics.getHeight() then
         self:resize(love.graphics.getDimensions())
     end
 
