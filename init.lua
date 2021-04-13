@@ -1,7 +1,7 @@
 local old_class = class
-local old_tween = tween
+local old_timer = timer
 
-tween = require(... .. "/modules/vendor/tween")
+timer = require(... .. "/modules/vendor/timer")
 class = require(... .. "/modules/class")
 
 require(... .. "/modules/math")
@@ -38,7 +38,6 @@ ui_manager.base_theme = base_theme
 ui_manager.theme = ui_manager.base_theme
 ui_manager.elements = elements
 ui_manager.class = class
-ui_manager.tween = tween
 
 function ui_manager.register(element_name, ui_element)
     elements[element_name] = ui_element
@@ -60,6 +59,7 @@ function ui_manager:init()
     panel.init(self)
 
     self.ui_manager = self
+    self.timer = timer.new()
 
     self.x = 0
     self.y = 0
@@ -142,12 +142,10 @@ function ui_manager:update_children(dt, mx, my)
 end
 
 function ui_manager:update(dt)
+    self.timer:update(dt)
+
     if not self:is_on_screen() then
         return
-    end
-
-    if self.last_width ~= love.graphics.getWidth() or self.last_height ~= love.graphics.getHeight() then
-        self:resize(love.graphics.getDimensions())
     end
 
     local mx, my = love.mouse.getPosition()
@@ -386,6 +384,8 @@ function ui_manager:wheelmoved(x, y)
 end
 
 function ui_manager:resize(w, h)
+    --self:scale(w / self.last_width, h / self.last_height)
+
     self.last_width, self.last_height = w, h
     self.w, self.h = w, h
     self:invalidate()
@@ -505,6 +505,6 @@ function ui_manager:uninstall_event(event)
 end
 
 class = old_class
-tween = old_tween
+timer = old_timer
 
 return ui_manager

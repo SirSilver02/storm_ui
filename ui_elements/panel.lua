@@ -15,6 +15,7 @@ function panel:init()
     self.ry = 0
 
     self.children = {}
+    self.tweens = {}
 
     self.wheel_enabled = false
     self.mouse_enabled = true
@@ -62,20 +63,12 @@ function panel:post_init()
     end)
 end
 
+function panel:update_tweens()
+
+end
+
 function panel:update(dt)
-    if self.tween then
-        local finished = self.tween:update(dt)
 
-        if finished then
-            local callback = self.tween.on_finished
-            
-            if callback then
-                callback()
-            end
-
-            self.tween = nil
-        end
-    end
 end
 
 function panel:set_image_scale(scale_x, scale_y)
@@ -659,9 +652,26 @@ function panel:scale(scale_x, scale_y)
 end
 ]]
 
-function panel:move_to(duration, x, y, move_type, on_finished)
-    self.tween = tween.new(duration, self, {x = x, y = y}, move_type)
-    self.tween.on_finished = on_finished
+--no single tweens, table of tweens
+
+function panel:move_to(duration, x, y, move_type, after)
+    local pos = {x = self.x, y = self.y}
+
+    local tween = self.ui_manager.timer:tween(duration, pos, {x = x, y = y}, move_type, after)
+
+    local during = self.ui_manager.timer:during(duration, function()
+        self:set_pos(pos.x, pos.y)
+    end)
+end
+
+function panel:size_to(duration, w, h, move_type, after)
+    local size = {w = self.w, h = self.h}
+
+    local tween = self.ui_manager.timer:tween(duration, size, {w = w, h = h}, move_type, after)
+
+    local during = self.ui_manager.timer:during(duration, function()
+        self:set_size(size.w, size.h)
+    end)
 end
 
 function panel:get_smallest_parent_vertically()
