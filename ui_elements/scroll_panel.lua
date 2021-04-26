@@ -1,6 +1,6 @@
-local panel = require((...):gsub("[^/]+$", "/panel"))
+local panel = modules.class.get("panel")
 
-local scroll_panel = class(panel)
+local scroll_panel = modules.class("scroll_panel", "panel")
 
 function scroll_panel:init()
     panel.init(self)
@@ -19,7 +19,7 @@ function scroll_panel:post_init()
     self.right_panel = self:add("panel")
     self.right_panel:dock("right")
     self.right_panel:set_scalable(false)
-    self.right_panel:set_width(self.ui_manager.theme.scroll_panel.scrollbar_width)
+    self.right_panel:set_width(self.ui.theme.scroll_panel.scrollbar_width)
 
     self.right_panel:add_hook("on_mousepressed", function(this, x, y, button)
         if button == 1 then
@@ -31,25 +31,25 @@ function scroll_panel:post_init()
             self.scroll_y = self.main_panel.y
 
             --Fake it 'til you make it. Honestly this is probably not a good idea though. 
-            --TODO: Check for bugs where depressed_child is set by ui_manager
-            self.ui_manager.depressed_child = self.scrollbar
+            --TODO: Check for bugs where depressed_child is set by ui
+            self.ui.depressed_child = self.scrollbar
             self.scrollbar.depressed = true
             this.depressed = false
-            --self.ui_manager:set_focus(self.scrollbar)
+            --self.ui:set_focus(self.scrollbar)
         end
     end)
     
     self.scrollbar = self.right_panel:add("button")
     self.scrollbar:set_text("")
     self.scrollbar:set_width(self.right_panel:get_width())
-    self.scrollbar:set_background_color(self.ui_manager.theme.scroll_panel.scrollbar_color)
+    self.scrollbar:set_background_color(self.ui.theme.scroll_panel.scrollbar_color)
 
     self.scrollbar:add_hook("on_dragged", function(this, x, y, dx, dy)
         local local_x, local_y = this:mouse_to_local(x, y)
         local scrollbar_height = self.scrollbar:get_height()
         self.scrollbar:set_pos(0, math.min(math.max(0, this.y + dy), self:get_height() - scrollbar_height))
 
-        self.main_panel.y = math.round(-self.scrollbar.y * (self.main_panel:get_height() / self:get_height()))
+        self.main_panel.y = modules.util.math.round(-self.scrollbar.y * (self.main_panel:get_height() / self:get_height()))
         self.scroll_y = self.main_panel.y
     end)
 

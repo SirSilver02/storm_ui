@@ -1,13 +1,13 @@
-local panel = require((...):gsub("[^/]+$", "/panel"))
+local panel = modules.class.get("panel")
 
-local slider = class(panel)
+local slider = modules.class("slider", "panel")
 
 function slider:post_init()
     panel.post_init(self)
 
     self.slider = self:add("panel")
     self.slider:set_size(20, 20)
-    self.slider:set_background_color(self.ui_manager.theme.button.depressed_color)
+    self.slider:set_background_color(self.ui.theme.button.depressed_color)
     self.slider:set_outline_radius(10, 10)
 
     self.percent = 0.5
@@ -18,13 +18,13 @@ function slider:post_init()
 
     local on_dragged = function(this, mx, my, dx, dy)
         local x, y = self:mouse_to_local(mx, my)
-        local percent = math.clamp(x / self:get_width(), 0, 1)
+        local percent = modules.util.math.clamp(x / self:get_width(), 0, 1)
         self:set_percent(percent)
     end
 
     self:add_hook("on_mousepressed", function(this, mx, my, button)
         local x, y = self:mouse_to_local(mx, my)
-        local percent = math.clamp(x / self:get_width(), 0, 1)
+        local percent = modules.util.math.clamp(x / self:get_width(), 0, 1)
         self:set_percent(percent)
     end)
 

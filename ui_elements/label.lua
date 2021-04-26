@@ -1,6 +1,6 @@
-local panel = require((...):gsub("[^/]+$", "/panel"))
+local panel = modules.class.get("panel")
 
-local label = class(panel)
+local label = modules.class("label", "panel")
 
 function label:init()
     panel.init(self)
@@ -14,17 +14,17 @@ function label:post_init()
     self:set_draw_background(false)
     self:set_draw_outline(false)
 
-    self.font = self.ui_manager.theme.label.font
+    self.font = self.ui.theme.label.font
     self.text = "label"
     self.text_align = 7
     self.rotation = 0
     self.text_object = love.graphics.newText(self.font, self.text)
 
-    self:set_text_color(self.ui_manager.theme.label.text_color)
-    self:set_dropshadow_color(self.ui_manager.theme.label.text_shadow_color)
-    self:set_text_outline_color(self.ui_manager.theme.label.text_outline_color)
-    self:set_text_outline_distance(self.ui_manager.theme.label.text_outline_distance)
-    self:set_dropshadow_offset(self.ui_manager.theme.label.dropshadow_offset)
+    self:set_text_color(self.ui.theme.label.text_color)
+    self:set_dropshadow_color(self.ui.theme.label.text_shadow_color)
+    self:set_text_outline_color(self.ui.theme.label.text_outline_color)
+    self:set_text_outline_distance(self.ui.theme.label.text_outline_distance)
+    self:set_dropshadow_offset(self.ui.theme.label.dropshadow_offset)
 
     self:add_hook("on_validate", function(this)
         this:set_text(this:get_text())

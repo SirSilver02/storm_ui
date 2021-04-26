@@ -1,6 +1,6 @@
-local panel = require((...):gsub("[^/]+$", "/panel"))
+local panel = modules.class.get("panel")
 
-local grid_panel = class(panel)
+local grid_panel = modules.class("grid_panel", "panel")
 grid_panel.columns = 1
 grid_panel.grid_width = 60
 grid_panel.grid_height = 60

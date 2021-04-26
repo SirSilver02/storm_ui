@@ -1,6 +1,6 @@
-local button = require((...):gsub("[^/]+$", "/button"))
+local button = modules.class.get("button")
 
-local checkbox = class(button)
+local checkbox = modules.class("checkbox", "button")
 
 function checkbox:init()
     button.init(self)
@@ -22,7 +22,7 @@ end
 function checkbox:post_init()
     button.post_init(self)
 
-    self.outline_color = self.ui_manager.theme.checkbox.outline_color
+    self.outline_color = self.ui.theme.checkbox.outline_color
 end
 
 function checkbox:check_internal()
@@ -32,7 +32,7 @@ end
 
 function checkbox:uncheck_internal()
     self.checked = false
-    self.background_color, self.depressed_color = self.ui_manager.theme.panel.background_color, self.ui_manager.theme.button.depressed_color
+    self.background_color, self.depressed_color = self.ui.theme.panel.background_color, self.ui.theme.button.depressed_color
 end
 
 function checkbox:post_init()

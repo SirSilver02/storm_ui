@@ -1,9 +1,9 @@
 --Litteraly just make button a label, but it draws different and stuff.
 
-local panel = require((...):gsub("[^/]+$", "/panel"))
-local label = require((...):gsub("[^/]+$", "/label"))
+local panel = modules.class.get("panel")
+local label = modules.class.get("label")
 
-local button = class(label)  --TODO: Maybe change this to class(panel) ?
+local button = modules.class("button", "label")  --TODO: Maybe change this to class(panel) ?
 
 function button:init()
     label.init(self)
@@ -16,7 +16,7 @@ function button:init()
 end
 
 function button:post_init()
-    local theme = self.ui_manager.theme
+    local theme = self.ui.theme
 
     label.post_init(self)
 
@@ -24,8 +24,8 @@ function button:post_init()
     self:set_hover_enabled(true)
     self:set_draw_background(true)
 
-    self.hovered_color = {unpack(self.ui_manager.theme.button.hovered_color)}
-    self.depressed_color = {unpack(self.ui_manager.theme.button.depressed_color)}
+    self.hovered_color = {unpack(self.ui.theme.button.hovered_color)}
+    self.depressed_color = {unpack(self.ui.theme.button.depressed_color)}
 
     self:set_text("text")
     self:set_align(5)

@@ -1,6 +1,6 @@
-local panel = require((...):gsub("[^/]+$", "/panel"))
+local panel = modules.class.get("panel")
 
-local blank_panel = class(panel)
+local blank_panel = modules.class("blank_panel", "panel")
 
 function blank_panel:post_init()
     panel.post_init(self)

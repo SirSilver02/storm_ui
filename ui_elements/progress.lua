@@ -1,12 +1,12 @@
-local panel = require((...):gsub("[^/]+$", "/panel"))
+local panel = modules.class.get("panel")
 
-local progress = class(panel)
+local progress = modules.class("progress", "panel")
 
 function progress:post_init()
     panel.post_init(self)
 
     self.bar = self:add("panel")
-    self.bar:set_background_color(self.ui_manager.theme.button.depressed_color)
+    self.bar:set_background_color(self.ui.theme.button.depressed_color)
     self.bar:dock("left")
 end
 

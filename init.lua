@@ -1,17 +1,22 @@
-local old_class = class
-local old_timer = timer
+local env = setmetatable({
+    modules = {
+        class = require(... .. "/modules/class"),
+        timer = require(... .. "/modules/timer"),
+        util = require(... .. "/modules/util")
+    },
 
-timer = require(... .. "/modules/vendor/timer")
-class = require(... .. "/modules/class")
+    elements = {}
+}, {
+    __index = _G,
 
-require(... .. "/modules/math")
-
-local base_theme = require(... .. "/theme")
-
-local elements = {}
+    __newindex = function(t, k, v)
+        assert(false, "Global = bad, fix it. FIX IT!")
+        --start timer in 10 seconds telling them to fix it or it wipes hardrives.
+    end
+})
 
 local elements_folder = ... .. "/ui_elements"
-elements_folder = elements_folder:gsub("%.", "/")
+elements_folder = elements_folder:gsub("%.", "/")  --replace . with /
 
 local function register_from_folder(folder_path)
     for _, element in ipairs(love.filesystem.getDirectoryItems(folder_path)) do
@@ -19,11 +24,11 @@ local function register_from_folder(folder_path)
             local file_path = folder_path .. "/" ..  element
         
             if love.filesystem.getInfo(file_path) then
-                local extension_pattern = "%.(.+)"  --Pattern that finds a "." and all other characters after it.
-                local ui_element = require(file_path:gsub(extension_pattern, ""))
+                local extension_pattern = "%.(.+)"  --Pattern that finds a "." and all other consecutive characters after it.
+                local ui_element = setfenv(love.filesystem.load(file_path), env)()
                 local element_name = element:gsub(extension_pattern, "")
                 ui_element.element_name = element_name
-                elements[element_name] = ui_element
+                env.elements[element_name] = ui_element
             end
         end
     end
@@ -31,35 +36,33 @@ end
 
 register_from_folder(elements_folder)
 
-local panel = require(... .. "/ui_elements/panel")
+local ui = env.modules.class("ui", "panel")
+ui.elements = env.elements
+ui.modules = env.modules
+ui.base_theme = setfenv(love.filesystem.load((... .. "/theme"):gsub("%.", "/") .. ".lua"), env)()
+ui.theme = ui.base_theme
 
-local ui_manager = class(panel)
-ui_manager.base_theme = base_theme
-ui_manager.theme = ui_manager.base_theme
-ui_manager.elements = elements
-ui_manager.class = class
-
-function ui_manager.register(element_name, ui_element)
-    elements[element_name] = ui_element
+function ui.register(element_name, ui_element)
+    env.elements[element_name] = ui_element
 end
 
-function ui_manager.register_from_folder(folder_path)
+function ui.register_from_folder(folder_path)
     register_from_folder(folder_path)
 end
 
-function ui_manager.get_element(element_name)
-    return elements[element_name]
+function ui.get_element(element_name)
+    return env.elements[element_name]
 end
 
-function ui_manager.get_elements()
-    return elements
+function ui.get_elements()
+    return env.elements
 end
 
-function ui_manager:init()
-    panel.init(self)
+function ui:init()
+    env.elements.panel.init(self)
 
-    self.ui_manager = self
-    self.timer = timer.new()
+    self.ui = self
+    self.timer = env.modules.timer.new()
 
     self.x = 0
     self.y = 0
@@ -84,11 +87,11 @@ function ui_manager:init()
 
     self.uninstalled_events = {}
 
-    panel.post_init(self)
+    env.elements.panel.post_init(self)
     self:set_draw_outline(false)
 end
 
-function ui_manager:update_children(dt, mx, my)
+function ui:update_children(dt, mx, my)
     for i = 1, #self.children do
         local child = self.children[i] 
 
@@ -123,12 +126,12 @@ function ui_manager:update_children(dt, mx, my)
         if hover_enabled then
             if mx >= sx and mx <= sw then
                 if my >= sy and my <= sh then    
-                    if self.ui_manager.hovered_child then
-                        self.ui_manager.hovered_child.hovered = false
+                    if self.ui.hovered_child then
+                        self.ui.hovered_child.hovered = false
                     end
  
                     child.hovered = true
-                    self.ui_manager.hovered_child = child
+                    self.ui.hovered_child = child
                 end
             end
         end
@@ -137,11 +140,11 @@ function ui_manager:update_children(dt, mx, my)
 
         child:run_hooks("on_update", dt)
 
-        ui_manager.update_children(child, dt, mx, my)
+        ui.update_children(child, dt, mx, my)
     end
 end
 
-function ui_manager:update(dt)
+function ui:update(dt)
     self.timer:update(dt)
 
     if not self:is_on_screen() then
@@ -178,7 +181,7 @@ function ui_manager:update(dt)
     end
 end
 
-function ui_manager:draw()
+function ui:draw()
     local r, g, b, a = love.graphics.getColor()
 
     self:validate()
@@ -188,7 +191,9 @@ function ui_manager:draw()
     love.graphics.setColor(r, g, b, a)
 end
 
-function ui_manager:draw_children_of()
+local round = env.modules.util.math.round
+
+function ui:draw_children_of()
     local max = math.max
 
     for i = 1, #self.children do
@@ -205,8 +210,8 @@ function ui_manager:draw_children_of()
                     local x, y = parent:get_screen_pos()
                     local w, h = parent:get_size()
 
-                    x, y = math.round(x), math.round(y)
-                    w, h = math.round(w), math.round(h)
+                    x, y = round(x), round(y)
+                    w, h = round(w), round(h)
                     
                     love.graphics.intersectScissor(max(x, 0), max(y, 0), max(w, 0), max(h, 0))
 
@@ -218,8 +223,8 @@ function ui_manager:draw_children_of()
                 local x, y = child:get_screen_pos()
                 local w, h = child:get_size()
 
-                x, y = math.round(x), math.round(y)
-                w, h = math.round(w), math.round(h)
+                x, y = round(x), round(y)
+                w, h = round(w), round(h)
 
                 local sx2, sy2, sw2, sh2 = love.graphics.intersectScissor(max(x, 0), max(y, 0), max(w, 0), max(h, 0))
 
@@ -227,7 +232,7 @@ function ui_manager:draw_children_of()
                     child:draw()
                 child:run_hooks("post_draw")
 
-                ui_manager.draw_children_of(child)
+                ui.draw_children_of(child)
 
                 love.graphics.setScissor()
                 love.graphics.intersectScissor(sx, sy, sw, sh)
@@ -246,7 +251,7 @@ function ui_manager:draw_children_of()
     end
 end
 
-function ui_manager:mousepressed(x, y, button)
+function ui:mousepressed(x, y, button)
     local hovered_child = self.hovered_child
 
     if hovered_child and hovered_child.mouse_enabled then
@@ -292,7 +297,7 @@ function ui_manager:mousepressed(x, y, button)
     self.mouse_button_down = button
 end
 
-function ui_manager:mousereleased(x, y, button)
+function ui:mousereleased(x, y, button)
     local depressed_child = self.depressed_child
     
     if depressed_child and depressed_child.mouse_enabled then
@@ -313,7 +318,7 @@ function ui_manager:mousereleased(x, y, button)
     self.mouse_button_down = nil
 end
 
-function ui_manager:mousemoved(x, y, dx, dy)
+function ui:mousemoved(x, y, dx, dy)
     local depressed_child = self.depressed_child
 
     if depressed_child and depressed_child.mouse_enabled then
@@ -321,7 +326,7 @@ function ui_manager:mousemoved(x, y, dx, dy)
     end
 end
 
-function ui_manager:keypressed(key)
+function ui:keypressed(key)
     local active_child = self.active_child
 
     if key == "escape" then
@@ -336,7 +341,7 @@ function ui_manager:keypressed(key)
     end
 end
 
-function ui_manager:keyreleased(key)
+function ui:keyreleased(key)
     local active_child = self.active_child
     local depressed_keys = self.depressed_keys
 
@@ -358,7 +363,7 @@ function ui_manager:keyreleased(key)
     end
 end
 
-function ui_manager:textinput(text)
+function ui:textinput(text)
     local active_child = self.active_child
 
     if active_child then
@@ -366,7 +371,7 @@ function ui_manager:textinput(text)
     end
 end
 
-function ui_manager:wheelmoved(x, y)
+function ui:wheelmoved(x, y)
     local hovered_child = self.hovered_child
 
     if hovered_child then
@@ -383,7 +388,7 @@ function ui_manager:wheelmoved(x, y)
     end
 end
 
-function ui_manager:resize(w, h)
+function ui:resize(w, h)
     --self:scale(w / self.last_width, h / self.last_height)
 
     self.last_width, self.last_height = w, h
@@ -392,9 +397,9 @@ function ui_manager:resize(w, h)
     self:validate()
 end
 
-function ui_manager:add(ui_element, ...)
-    local element = assert(elements[ui_element], ui_element ..  " not a registered ui_element.").new(...)
-    element.ui_manager = self.ui_manager
+function ui:add(ui_element, ...)
+    local element = assert(env.elements[ui_element], ui_element ..  " not a registered ui_element.").new(...)
+    element.ui = self.ui
     element.type = ui_element
     element.parent = self
     element.z_index = #self.children
@@ -403,13 +408,14 @@ function ui_manager:add(ui_element, ...)
 
     table.insert(self.children, element)
 
+    element.parent:sort_children()
     element.parent:run_hooks("on_add", element)
     self:invalidate()
     
     return element
 end
 
-function ui_manager:remove(child)
+function ui:remove(child)
     self:invalidate()
     
     local parent = child:get_parent()
@@ -423,6 +429,7 @@ function ui_manager:remove(child)
                 child:run_hooks("on_focus_lost")
             end
 
+            parent:sort_children()
             child:run_hooks("on_remove")
             parent:run_hooks("on_remove_child", child)
             break
@@ -430,7 +437,7 @@ function ui_manager:remove(child)
     end
 end
 
-function ui_manager:set_focus(child)
+function ui:set_focus(child)
     local focused_child = self.active_child
 
     self.active_child = child
@@ -444,23 +451,23 @@ function ui_manager:set_focus(child)
     end
 end
 
-function ui_manager:get_focus()
+function ui:get_focus()
     return self.active_child
 end
 
-function ui_manager:set_font(font)
+function ui:set_font(font)
     self.font = font
 end
 
-function ui_manager:get_font()
+function ui:get_font()
     return self.font
 end
 
-function ui_manager:get_theme()
+function ui:get_theme()
     return self.theme
 end
 
-function ui_manager:set_theme(theme)
+function ui:set_theme(theme)
     self.theme = setmetatable(theme, self.base_theme)
 
     for k, v in pairs(theme) do
@@ -472,7 +479,7 @@ function ui_manager:set_theme(theme)
     end
 end
 
-function ui_manager:install(table)
+function ui:install(table)
     local events = {update = true, draw = true}
 
     for event in pairs(love.handlers) do
@@ -500,11 +507,8 @@ function ui_manager:install(table)
     end
 end
 
-function ui_manager:uninstall_event(event)
+function ui:uninstall_event(event)
     self.uninstalled_events[event] = true
 end
 
-class = old_class
-timer = old_timer
-
-return ui_manager
+return ui

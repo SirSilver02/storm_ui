@@ -1,10 +1,10 @@
-local button = require((...):gsub("[^/]+$", "/button"))
+local button = modules.class.get("button")
 
 local allowed_characters = {
     ["."] = true
 }
 
-local text_entry = class(button)
+local text_entry = modules.class("text_entry", "button")
 
 function text_entry:init()
     button.init(self)
@@ -96,7 +96,7 @@ function text_entry:post_init()
     end)
 
     self:add_hook("on_update", function(this, dt)
-        if this.ui_manager.active_child == this then
+        if this.ui.active_child == this then
             this.blink_time_passed = this.blink_time_passed + dt
     
             if this.blink_time_passed >= this.blink_duration then
@@ -113,7 +113,7 @@ end
 function text_entry:draw()
     button.draw(self)
 
-    if self.ui_manager.active_child == self then
+    if self.ui.active_child == self then
         if self.draw_blink_line then
             local font = self:get_font()
             local previous_font = love.graphics.getFont()

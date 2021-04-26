@@ -1,6 +1,4 @@
-local tween = tween
-
-local panel = class()
+local panel = modules.class("panel")
 
 function panel:init()
     self.x = 0
@@ -15,7 +13,6 @@ function panel:init()
     self.ry = 0
 
     self.children = {}
-    self.tweens = {}
 
     self.wheel_enabled = false
     self.mouse_enabled = true
@@ -45,30 +42,18 @@ function panel:init()
 end
 
 function panel:post_init()
-    local panel_theme = self.ui_manager.theme.panel
+    local panel_theme = self.ui.theme.panel
 
-    self.background_color = {unpack(panel_theme.background_color)}
+    self.background_color = {unpack(panel_theme.background_color)}  --can't reference the table itself or changes to background color with alter the theme background color.
     self.outline_color = {unpack(panel_theme.outline_color)}
     self.should_draw_outline = panel_theme.outline
     self.should_draw_background = panel_theme.background
 
     self.outline_width = panel_theme.outline_width
-
-    self:add_hook("on_add", function(this)
-        this:sort_children()
-    end)
-
-    self:add_hook("on_remove_child", function(this)
-        this:sort_children()
-    end)
-end
-
-function panel:update_tweens()
-
 end
 
 function panel:update(dt)
-
+    --why am I here
 end
 
 function panel:set_image_scale(scale_x, scale_y)
@@ -423,7 +408,7 @@ function panel:set_image(image)
 end
 
 function panel:remove()
-    self.ui_manager:remove(self)
+    self.ui:remove(self)
 end
 
 function panel:remove_children()
@@ -578,7 +563,7 @@ function panel:mouse_to_local(mx, my)
 end
 
 function panel:add(ui_element, ...)
-    return self.ui_manager.add(self, ui_element, ...)
+    return self.ui.add(self, ui_element, ...)
 end
 
 function panel:run_hooks(hook_name, ...)
@@ -652,14 +637,12 @@ function panel:scale(scale_x, scale_y)
 end
 ]]
 
---no single tweens, table of tweens
-
 function panel:move_to(duration, x, y, move_type, after)
     local pos = {x = self.x, y = self.y}
 
-    local tween = self.ui_manager.timer:tween(duration, pos, {x = x, y = y}, move_type, after)
+    local tween = self.ui.timer:tween(duration, pos, {x = x, y = y}, move_type, after)
 
-    local during = self.ui_manager.timer:during(duration, function()
+    local during = self.ui.timer:during(duration, function()
         self:set_pos(pos.x, pos.y)
     end)
 end
@@ -667,9 +650,9 @@ end
 function panel:size_to(duration, w, h, move_type, after)
     local size = {w = self.w, h = self.h}
 
-    local tween = self.ui_manager.timer:tween(duration, size, {w = w, h = h}, move_type, after)
+    local tween = self.ui.timer:tween(duration, size, {w = w, h = h}, move_type, after)
 
-    local during = self.ui_manager.timer:during(duration, function()
+    local during = self.ui.timer:during(duration, function()
         self:set_size(size.w, size.h)
     end)
 end
