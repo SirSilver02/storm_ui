@@ -377,7 +377,7 @@ function panel:hide()
 end
 
 function panel:unhide()
-    self:set_hover_enabled(self.last_hover_enabled)
+    self:set_hover_enabled(true)
     self:set_visible(true)
 
     self.hidden = false
