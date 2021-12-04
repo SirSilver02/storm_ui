@@ -10,11 +10,13 @@ local function colored_text(text, word_colors, default_color)
 
     --keeps track of the start and end substring pos of each word match
     for word, color in pairs(word_colors) do
-        local start, stop = lower_text:find(word)
+        local start, stop = lower_text:find(word, 1, true)
+        stop = stop and stop + 1
 
         while start do
-            table.insert(matches, {start = start, stop = stop, color = color})
-            start, stop = lower_text:find(word, stop)
+            table.insert(matches, {start = start, stop = stop - 1, color = color})
+            start, stop = lower_text:find(word, stop, true)
+            stop = stop and stop + 1
         end
     end
 
@@ -26,8 +28,7 @@ local function colored_text(text, word_colors, default_color)
     local string_i = 1
     local matches_i = 1
 
-    --while string_i < #text + 1 do
-    while true do
+    while string_i < #text + 1 do
         local match = matches[matches_i]
 
         if match then
