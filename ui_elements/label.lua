@@ -1,3 +1,5 @@
+local table_copy = modules.util.table.copy
+
 local panel = modules.class.get("panel")
 
 local label = modules.class("label", "panel")
@@ -20,14 +22,14 @@ function label:post_init()
     self.rotation = 0
     self.text_object = love.graphics.newText(self.font, self.text)
 
-    self:set_text_color(self.ui.theme.label.text_color)
-    self:set_dropshadow_color(self.ui.theme.label.text_shadow_color)
-    self:set_text_outline_color(self.ui.theme.label.text_outline_color)
+    self:set_text_color({unpack(self.ui.theme.label.text_color)})
+    self:set_dropshadow_color({unpack(self.ui.theme.label.text_shadow_color)})
+    self:set_text_outline_color({unpack(self.ui.theme.label.text_outline_color)})
     self:set_text_outline_distance(self.ui.theme.label.text_outline_distance)
     self:set_dropshadow_offset(self.ui.theme.label.dropshadow_offset)
 
     self:add_hook("on_validate", function(this)
-        this:set_text(this:get_text())
+        this:set_text(this.text) --use .text over get_text() in case self.text is a text_object
     end)
 end
 
@@ -43,12 +45,6 @@ function label:size_to_contents()
 
     self:set_text(self.text)
 end
---[[
-function label:set_width_internal(w)
-    panel.set_width_internal(self, w)
-    self.text_object:setf(self.text, w , self:need_a_better_name())
-end
-]]
 
 function label:get_horizontal_align()
     local align = self.text_align
@@ -71,7 +67,16 @@ function label:set_align(align)
     self:set_text(self.text)
 end
 
+local function is_colored_text(colored_text)
+    return type(colored_text) == "table" and colored_text.original_text and colored_text[1] and colored_text[2] and type(colored_text[1]) == "table" and type(colored_text[2]) == "string"
+end
+
 function label:get_text()
+    --if text is colored_text_table
+    if is_colored_text(self.text) then
+        return self.text.original_text
+    end
+
     return self.text
 end
 
@@ -82,8 +87,19 @@ function label:set_text(text)
 
     --local outline_distance = self.should_draw_text_outline and self.outline 
 
-    self.text = tostring(text)
+    if is_colored_text(text) then
+        self.text = text --store the colored_text here
+    else
+        self.text = tostring(text)
+    end
+
     self.text_object:setf(self.text, self.w, self:get_horizontal_align())
+
+    self:run_hooks("on_set_text", self.text)
+end
+
+function label:set_text_colored(text, word_colors, default_color)
+    self:set_text(modules.colored_text(text, word_colors, default_color))
 end
 
 function label:get_font()
@@ -96,7 +112,7 @@ function label:set_font(font)
 end
 
 function label:set_dropshadow_color(r, g, b, a)
-    self.text_shadow_color = type(r) == "table" and r or {r, g, b, a}
+    self.text_shadow_color = type(r) == "table" and table_copy(r) or {r, g, b, a}
 end
 
 function label:get_dropshadow_color()
@@ -105,7 +121,11 @@ end
 
 function label:set_text_color(r, g, b, a)
     assert(r, "No color passed to set_text_color.")
-    self.text_color = type(r) == "table" and r or {r, g, b, a}
+    self.text_color = type(r) == "table" and table_copy(r) or {r, g, b, a}
+end
+
+function label:set_text_alpha(a)
+    self.text_color[4] = a
 end
 
 function label:get_text_color()
@@ -121,7 +141,7 @@ function label:get_dropshadow()
 end
 
 function label:set_dropshadow_offset(x, y)
-    self.dropshadow_offset = type(x) == "table" and x or {x, y}
+    self.dropshadow_offset = type(x) == "table" and table_copy(x) or {x, y}
 end
 
 function label:get_dropshadow_offset()
@@ -137,7 +157,11 @@ function label:get_text_outline()
 end
 
 function label:set_text_outline_color(r, g, b, a)
-    self.text_outline_color = type(r) == "table" and r or {r, g, b, a}
+    self.text_outline_color = type(r) == "table" and table_copy(r) or {r, g, b, a}
+end
+
+function label:set_text_outline_alpha(a)
+    self.text_outline_color[4] = a
 end
 
 function label:get_text_outline_color()
@@ -204,7 +228,7 @@ function label:draw_text()
 
         for y2 = -distance, distance do
             for x2 = -distance, distance do
-                love.graphics.draw(self.text_object, x + x2 , y + y2)
+                love.graphics.draw(self.text_object, x + x2 , y + y2)  --Buggy wuggy, text_outline_color_alpha will make this less transparent than it should be, could use canvases.... maybe blending mode?
             end
         end
     end

@@ -1,4 +1,4 @@
---Litteraly just make button a label, but it draws different and stuff.
+local table_copy = modules.util.table.copy
 
 local panel = modules.class.get("panel")
 local label = modules.class.get("label")
@@ -48,7 +48,7 @@ function button:draw()
 end
 
 function button:set_hovered_color(r, g, b, a)
-    self.hovered_color = type(r) == "table" and r or {r, g, b, a}
+    self.hovered_color = type(r) == "table" and table_copy(r) or {r, g, b, a}
 end
 
 function button:get_hovered_color()
@@ -56,7 +56,7 @@ function button:get_hovered_color()
 end
 
 function button:set_depressed_color(r, g, b, a)
-    self.depressed_color = type(r) == "table" and r or {r, g, b, a}
+    self.depressed_color = type(r) == "table" and table_copy(r) or {r, g, b, a}
 end
 
 function button:get_depressed_color()

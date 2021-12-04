@@ -1,8 +1,9 @@
 local env = setmetatable({
     modules = {
-        class = require(... .. "/modules/class"),
-        timer = require(... .. "/modules/timer"),
-        util = require(... .. "/modules/util")
+        class           = require(... .. "/modules/class"),
+        colored_text    = require(... .. "/modules/colored_text"),
+        timer           = require(... .. "/modules/timer"),
+        util            = require(... .. "/modules/util")
     },
 
     elements = {}
@@ -182,6 +183,8 @@ function ui:update(dt)
 end
 
 function ui:draw()
+    love.graphics.setScissor()
+    
     local r, g, b, a = love.graphics.getColor()
 
     self:validate()
@@ -193,6 +196,7 @@ end
 
 local round = env.modules.util.math.round
 
+--[[
 function ui:draw_children_of()
     local max = math.max
 
@@ -237,19 +241,62 @@ function ui:draw_children_of()
                 love.graphics.setScissor()
                 love.graphics.intersectScissor(sx, sy, sw, sh)
             
+                child:run_hooks("post_draw_children")
+
                 --dont want outline to be covered by it's children
                 if child:get_draw_outline() then
                     love.graphics.setColor(child:get_outline_color())
                     child:draw_outline()
                 end
-
-                child:run_hooks("post_draw_children")
-
+            
                 love.graphics.setScissor()
+                
             end
         end
     end
 end
+]]
+
+function ui:draw_children_of()
+    local max = math.max
+
+    local sx, sy, sw, sh = love.graphics.getScissor()
+
+    for i = 1, #self.children do
+        local child = self.children[i]
+
+        if child:get_visible() then
+            if child:is_on_screen() then
+                child:run_hooks("pre_draw_no_scissor")
+                
+                local x, y = child:get_screen_pos()
+                local w, h = child:get_size()
+
+                x, y = round(x), round(y)
+                w, h = round(w), round(h)
+
+                love.graphics.intersectScissor(x, y, w, h)
+
+                child:run_hooks("pre_draw")
+                    child:draw()
+                child:run_hooks("post_draw")
+
+                ui.draw_children_of(child)
+                child:run_hooks("post_draw_children")
+
+                --dont want outline to be covered by it's children
+                if child:get_draw_outline() then
+                    love.graphics.setColor(child:get_outline_color())
+                    child:draw_outline()
+                end
+            end
+        end
+
+        love.graphics.setScissor(sx, sy, sw, sh)
+    end
+end
+
+
 
 function ui:mousepressed(x, y, button)
     local hovered_child = self.hovered_child
@@ -330,7 +377,7 @@ function ui:keypressed(key)
     local active_child = self.active_child
 
     if key == "escape" then
-        self:set_focus()
+        --self:set_focus()  --coding yourself into a corner
     else
         self.depressed_key = key
         self.depressed_keys[#self.depressed_keys + 1] = key
@@ -491,9 +538,10 @@ function ui:install(table)
 
         table[event] = function(...)
             local _, a, b, c, d, e, f, g = ...
+            local ra, rb, rc, rd, re
 
             if old_event then
-                old_event(...)
+                ra, rb, rc, rd, re = old_event(...)
             end
 
             if self[event] and not self.uninstalled_events[event] then
@@ -503,6 +551,8 @@ function ui:install(table)
                     self[event](self, ...)
                 end
             end
+
+            return ra, rb, rc, rd, re
         end
     end
 end

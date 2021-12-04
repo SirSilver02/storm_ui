@@ -38,7 +38,7 @@ local theme = {
 
     scroll_panel = {
         scrollbar_width = 16,
-        scrollbar_color = divide_by_255({30, 34, 33, 255}),
+        scrollbar_color = divide_by_255({64, 64, 64, 255}),
     },
 
     progress = {

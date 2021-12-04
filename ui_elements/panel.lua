@@ -1,3 +1,5 @@
+local table_copy = modules.util.table.copy
+
 local panel = modules.class("panel")
 
 function panel:init()
@@ -106,7 +108,7 @@ function panel:get_alpha()
 end
 
 function panel:set_image_color(r, g, b, a)
-    self.image_color = type(r) == "table" and r or {r, g, b, a}
+    self.image_color = type(r) == "table" and table_copy(r) or {r, g, b, a}
 end
 
 function panel:get_image_color()
@@ -118,12 +120,11 @@ function panel:get_background_color()
 end
 
 function panel:set_background_color(r, g, b, a)
-    self.background_color = type(r) == "table" and r or {r, g, b, a}
+    self.background_color = type(r) == "table" and table_copy(r) or {r, g, b, a}
 end
 
 function panel:set_background_alpha(a)
-    local r, g, b = unpack(self.background_color)
-    self.background_color = {r, g, b, a}
+    self.background_color[4] = a
 end
 
 function panel:get_outline_color()
@@ -131,7 +132,7 @@ function panel:get_outline_color()
 end
 
 function panel:set_outline_color(r, g, b, a)
-    self.outline_color = type(r) == "table" and r or {r, g, b, a}
+    self.outline_color = type(r) == "table" and table_copy(r) or {r, g, b, a}
 end
 
 function panel:get_draw_background()
@@ -224,6 +225,22 @@ end
 
 function panel:get_screen_pos()
     return self.screen_x, self.screen_y
+
+    --[[
+    local x, y = self:get_pos()
+
+    local parent = self:get_parent()
+
+    while parent do
+        local px, py = parent:get_pos()
+        x = x + px
+        y = y + py
+
+        parent = parent:get_parent()
+    end
+
+    return x, y
+    ]]
 end
 
 function panel:dock(dock_enum)
@@ -236,7 +253,7 @@ function panel:get_dock_padding()
 end
 
 function panel:set_dock_padding(left, top, right, bottom)
-    self.dock_padding = type(left) == "table" and left or {
+    self.dock_padding = type(left) == "table" and table_copy(left) or {
         left or 0,
         top or 0,
         right or 0,
@@ -251,7 +268,7 @@ function panel:get_dock_margin()
 end
 
 function panel:set_dock_margin(left, top, right, bottom)
-    self.dock_margin = type(left) == "table" and left or {
+    self.dock_margin = type(left) == "table" and table_copy(left) or {
         left or 0,
         top or 0,
         right or 0,
@@ -695,10 +712,12 @@ function panel:get_smallest_parent_horizontally()
     return smallest_parent_horizontally, math.max(smallest_width, 0)
 end
 
-function panel:draw_background()
+function panel:draw_background(offset_x, offset_y)
     if self.should_draw_background then
+        offset_x, offset_y = offset_x or 0, offset_y or 0
+
         local x, y = self:get_screen_pos()
-        love.graphics.rectangle("fill", x, y, self.w, self.h, self.rx, self.ry)
+        love.graphics.rectangle("fill", x + offset_x, y + offset_y, self.w, self.h, self.rx, self.ry)
     end
 end
 

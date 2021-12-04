@@ -1,8 +1,34 @@
 local util = {
     table = {},
     math = {},
-    string = {}
+    string = {},
+    file = {}
 }
+
+--file
+
+local default_load_func = function(path)
+    require(path:gsub("%.(.+)", ""))
+end
+
+function util.file.recursive_load(folder, load_func)
+    for _, file_or_folder_name in pairs(love.filesystem.getDirectoryItems(folder)) do
+        local path = folder .. "/" .. file_or_folder_name
+        local info = love.filesystem.getInfo(path)
+
+        if info.type == "directory" then
+            util.file.recursive_load(path)
+        elseif info.type == "file" then
+            if not (file_or_folder_name == "init.lua") then
+                if load_func then
+                    load_func(path)
+                else
+                    default_load_func(path)
+                end
+            end
+        end
+    end
+end
 
 --table
 

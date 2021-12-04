@@ -47,10 +47,50 @@ function scroll_panel:post_init()
     self.scrollbar:add_hook("on_dragged", function(this, x, y, dx, dy)
         local local_x, local_y = this:mouse_to_local(x, y)
         local scrollbar_height = self.scrollbar:get_height()
-        self.scrollbar:set_pos(0, math.min(math.max(0, this.y + dy), self:get_height() - scrollbar_height))
+
+        --self.scrollbar:set_pos(0, math.min(math.max(0, this.y + dy), self:get_height() - scrollbar_height))
+        self.scrollbar:set_pos(0, this.y + dy)
 
         self.main_panel.y = modules.util.math.round(-self.scrollbar.y * (self.main_panel:get_height() / self:get_height()))
         self.scroll_y = self.main_panel.y
+                
+        local duration = 0.1
+        local time_passed = 0
+
+        local function slide_down(this, dt)
+            time_passed = modules.util.math.clamp(time_passed + dt, 0, duration)
+    
+            if time_passed == duration then
+                self:remove_hook("on_update", "slide_down")
+                return
+            elseif self.scroll_y <= 0 then
+                self:remove_hook("on_update", "slide_down")
+                return
+            end
+
+            self.scrollbar:run_hooks("on_dragged", mx, my, x, self.scroll_y * (time_passed / duration))
+        end
+
+        local function slide_up(this, dt)
+            time_passed = modules.util.math.clamp(time_passed + dt, 0, duration)
+    
+            if time_passed == duration then
+                self:remove_hook("on_update", "slide_up")
+                return
+            elseif self.scroll_y >= -self.main_panel:get_height() + self:get_height() then
+                self:remove_hook("on_update", "slide_up")
+                return
+            end
+
+            self.scrollbar:run_hooks("on_dragged", mx, my, x, (self.scroll_y + self.main_panel:get_height() - self:get_height()) * (time_passed / duration))
+        end
+
+        --if too far scrolled up
+        if self.scroll_y > 0 then
+            self:add_hook("on_update", "slide_down", slide_down)
+        elseif self.scroll_y < -self.main_panel:get_height() + self:get_height() then
+            self:add_hook("on_update", "slide_up", slide_up)
+        end
     end)
 
     self.right_panel:add_hook("on_dragged", function(this, x, y, dx, dy)
@@ -78,7 +118,28 @@ function scroll_panel:post_init()
 
     self:add_hook("on_wheelmoved", function(this, x, y)
         local mx, my = love.mouse.getPosition()
-        self.scrollbar:run_hooks("on_dragged", mx, my, x, -y * 10)
+
+        local duration = 0.5
+        local time_passed = 0
+        local remaining = -y * 40 --distance to travel over duration of scroll
+
+        local func 
+
+        func = function(this, dt)
+            time_passed = modules.util.math.clamp(time_passed + dt, 0, duration)
+
+            if time_passed == duration then
+                self:remove_hook("on_update", func)
+                return
+            end
+
+            local distance = remaining * (time_passed / duration)
+            remaining = remaining - distance
+
+            self.scrollbar:run_hooks("on_dragged", mx, my, x, distance)
+        end
+
+        self:add_hook("on_update", func)
     end)
 
     self:add_hook("on_mousepressed", function(this, x, y, button)
@@ -117,9 +178,9 @@ function scroll_panel:post_init()
     self:add_hook("post_draw_children", function(this)
         if self.wheel_scrolling then
             local x, y = self.wheel_scroll_x, self.wheel_scroll_y
-            local r = 30
+            local r = 20
 
-            love.graphics.setColor(0.5, 0.5, 0.5)
+            love.graphics.setColor(self.ui.theme.scroll_panel.scrollbar_color)
             love.graphics.circle("fill", x, y, r)
 
             love.graphics.setColor(self:get_outline_color())

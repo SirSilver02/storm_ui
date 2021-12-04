@@ -25,10 +25,25 @@ end
 
 function text_entry:post_init()
     button.post_init(self)
+
+    self.default_text_label = self:add("label")
+    self.default_text_label:set_align(5)
+    self.default_text_label:set_text("")
+    self.default_text_label:dock("fill")
+
+    self.default_text_label:set_text_color(0.5, 0.5, 0.5, 1)
     
     self:set_text("")
+    self:set_default_text("")
     self:set_align(5)
-    --TODO make line | appear after the text properly
+
+    self:add_hook("on_set_text", function(this, text)
+        if text == "" or not text then
+            self.default_text_label:set_text(self.default_text)
+        else
+            self.default_text_label:set_text("")
+        end
+    end)
 
     self:add_hook("on_keypressed", function(this, key)
         local text = this:get_text()
@@ -113,7 +128,7 @@ end
 function text_entry:draw()
     button.draw(self)
 
-    if self.ui.active_child == self then
+    if self.ui.active_child == self then  --questionable
         if self.draw_blink_line then
             local font = self:get_font()
             local previous_font = love.graphics.getFont()
@@ -127,6 +142,19 @@ function text_entry:draw()
             love.graphics.setFont(previous_font)
         end
     end
+end
+
+function text_entry:set_font(font)
+    button.set_font(self, font)
+    self.default_text_label:set_font(font)
+end
+
+function text_entry:set_default_text(text)
+    self.default_text = text
+end
+
+function text_entry:get_default_text()
+    return self.default_text
 end
 
 function text_entry:set_numeric(bool)
