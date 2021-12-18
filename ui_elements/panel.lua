@@ -38,6 +38,7 @@ function panel:init()
     self.dock_margin = {0, 0, 0, 0} --left, top, right, bottom  --margin is for itself 
     self.dock_type = "none"
 
+    self.nine_patch_color = {1, 1, 1, 1}
     self.image_color = {1, 1, 1, 1}
 
     self.hooks = {}
@@ -113,6 +114,14 @@ end
 
 function panel:get_image_color()
     return self.image_color
+end
+
+function panel:set_nine_patch_color(r, g, b, a)
+    self.nine_patch_color = type(r) == "table" and table_copy(r) or {r, g, b, a}
+end
+
+function panel:get_nine_patch_color()
+    return self.nine_patch_color
 end
 
 function panel:get_background_color()
@@ -721,6 +730,75 @@ function panel:draw_background(offset_x, offset_y)
     end
 end
 
+function panel:set_nine_patch(image)
+    self:set_draw_background(false)
+    self:set_draw_outline(false)
+
+    local img_w, img_h = image:getDimensions()
+    local quad_w, quad_h = img_w / 3, img_h / 3
+
+    self.nine_patch_images = {}
+    self.nine_patch_quads = {}
+
+    --creates 9 images from the main image, use them to draw repeating quads.
+    for y = 0, 2 do
+        self.nine_patch_images[y + 1] = {}
+        self.nine_patch_quads[y + 1] = {}
+
+        for x = 0, 2 do
+            local canvas = love.graphics.newCanvas(quad_w, quad_h)
+            canvas:setWrap("repeat", "repeat")
+
+            local quad = love.graphics.newQuad(x * quad_w, y * quad_h, quad_w, quad_h, img_w, img_h)
+
+            love.graphics.setCanvas(canvas)
+                love.graphics.setColor(1, 1, 1)
+                love.graphics.draw(image, quad)
+            love.graphics.setCanvas()
+
+            self.nine_patch_images[y + 1][x + 1] = canvas
+            self.nine_patch_quads[y + 1][x + 1] = love.graphics.newQuad(0, 0, quad_w, quad_h, quad_w, quad_h)
+        end
+    end
+end
+
+function panel:draw_nine_patch()
+    local images = self.nine_patch_images
+    local quads = self.nine_patch_quads
+
+    local screen_x, screen_y = self:get_screen_pos()
+    local w, h = self:get_size()
+
+    if images and quads then
+        local quad_w, quad_h = self.nine_patch_images[1][1]:getDimensions() --don't divide by 3 because these images ALREADY ARE
+
+        for row = 1, 3 do
+            for column = 1, 3 do
+                local image, quad = images[row][column], quads[row][column]
+                local x, y = screen_x, screen_y
+                local viewport_w, viewport_h = quad_w, quad_h
+
+                if row == 2 then
+                    y = y + quad_h
+                    viewport_h = h - quad_h * 2
+                elseif row == 3 then
+                    y = y + h - quad_h
+                end
+
+                if column == 2 then
+                    x = x + quad_w
+                    viewport_w = w - quad_w * 2
+                elseif column == 3 then
+                    x = x + w - quad_w
+                end
+
+                quad:setViewport(0, 0, viewport_w, viewport_h)
+                love.graphics.draw(image, quad, x, y)
+            end
+        end
+    end
+end
+
 function panel:draw_image(offset_x, offset_y)
     if self.image then
         local x, y = self:get_screen_pos()
@@ -773,6 +851,9 @@ end
 function panel:draw()
     love.graphics.setColor(self.background_color)
     self:draw_background()
+
+    love.graphics.setColor(self.nine_patch_color)
+    self:draw_nine_patch()
     
     love.graphics.setColor(self.image_color)
     self:draw_image()

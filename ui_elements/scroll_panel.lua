@@ -70,7 +70,7 @@ function scroll_panel:post_init()
 
             self.scrollbar:run_hooks("on_dragged", mx, my, x, self.scroll_y * (time_passed / duration))
         end
-
+        
         local function slide_up(this, dt)
             time_passed = modules.util.math.clamp(time_passed + dt, 0, duration)
     

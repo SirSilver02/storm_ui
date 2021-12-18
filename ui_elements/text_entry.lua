@@ -21,18 +21,21 @@ function text_entry:init()
     self.numeric = false
 
     self.max_characters = nil
+
+    --new
+    self.selecting = false
 end
 
 function text_entry:post_init()
     button.post_init(self)
 
+    --default text label is the "default text" that appears when your textbox is empty, and clears itself when you have anything in it
     self.default_text_label = self:add("label")
-    self.default_text_label:set_align(5)
     self.default_text_label:set_text("")
     self.default_text_label:dock("fill")
 
     self.default_text_label:set_text_color(0.5, 0.5, 0.5, 1)
-    
+
     self:set_text("")
     self:set_default_text("")
     self:set_align(5)
@@ -69,7 +72,7 @@ function text_entry:post_init()
 
     self:add_hook("on_keydown", function(this, key)
         local time = os.clock()
-
+ 
         this.blink_time_passed = 0
         this.draw_blink_line = true
 
@@ -123,6 +126,40 @@ function text_entry:post_init()
             this.draw_blink_line = false
         end
     end)
+
+    -----------------WIP
+
+    --mouse selection
+    --arrow keys move seletion
+    --delete removes forward letter from selection
+    --control a select from 1 to #text
+
+    --set start of selection based on font width and align, not sure about padding yet though
+    --if there is a big empty space because of word wrap that u click, should go to the left and find the next letter
+    self:add_hook("on_mousepressed", function(this, x, y, button)
+        if button == 1 then
+            self.selecting = true
+        end
+    end)
+
+    self:add_hook("on_mousereleased", function(this, x, y, button)
+        if button == 1 then
+            self.selecting = false
+        end
+    end)
+
+    --if selecting, draw selection box from start to end, blinking arrow at end (note end might be at hte beginning if u selected from right to left)
+    self:add_hook("on_update", function(this, dt)
+    
+    end)
+end
+
+function text_entry:set_align(align)
+    button.set_align(self, align)
+
+    if self.default_text_label then
+        self.default_text_label:set_align(align)
+    end
 end
 
 function text_entry:draw()

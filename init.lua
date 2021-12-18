@@ -196,67 +196,6 @@ end
 
 local round = env.modules.util.math.round
 
---[[
-function ui:draw_children_of()
-    local max = math.max
-
-    for i = 1, #self.children do
-        local child = self.children[i]
-
-        if child:get_visible() then
-            if child:is_on_screen() then
-                child:run_hooks("pre_draw_no_scissor")
-                
-                --local parent = child
-                local parent = self
-
-                while parent do
-                    local x, y = parent:get_screen_pos()
-                    local w, h = parent:get_size()
-
-                    x, y = round(x), round(y)
-                    w, h = round(w), round(h)
-                    
-                    love.graphics.intersectScissor(max(x, 0), max(y, 0), max(w, 0), max(h, 0))
-
-                    parent = parent:get_parent()
-                end
-
-                local sx, sy, sw, sh = love.graphics.getScissor()
-
-                local x, y = child:get_screen_pos()
-                local w, h = child:get_size()
-
-                x, y = round(x), round(y)
-                w, h = round(w), round(h)
-
-                local sx2, sy2, sw2, sh2 = love.graphics.intersectScissor(max(x, 0), max(y, 0), max(w, 0), max(h, 0))
-
-                child:run_hooks("pre_draw")
-                    child:draw()
-                child:run_hooks("post_draw")
-
-                ui.draw_children_of(child)
-
-                love.graphics.setScissor()
-                love.graphics.intersectScissor(sx, sy, sw, sh)
-            
-                child:run_hooks("post_draw_children")
-
-                --dont want outline to be covered by it's children
-                if child:get_draw_outline() then
-                    love.graphics.setColor(child:get_outline_color())
-                    child:draw_outline()
-                end
-            
-                love.graphics.setScissor()
-                
-            end
-        end
-    end
-end
-]]
-
 function ui:draw_children_of()
     local max = math.max
 
@@ -275,7 +214,9 @@ function ui:draw_children_of()
                 x, y = round(x), round(y)
                 w, h = round(w), round(h)
 
-                love.graphics.intersectScissor(x, y, w, h)
+                --added max again to fix crash when w and or h becomes negative because docking reasons inside a really small panel with a margin, don't ask.
+                --if theres something wrong with scissoring again can try removing the max
+                love.graphics.intersectScissor(x, y, math.max(0, w), math.max(0, h))
 
                 child:run_hooks("pre_draw")
                     child:draw()
