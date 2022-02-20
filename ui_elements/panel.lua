@@ -840,12 +840,13 @@ function panel:draw_outline()
     end
 end
 
+--compare to the size of the root panel, not the size of the scr_w, important!
 function panel:is_on_screen()
     local x, y = self:get_screen_pos()
     local w, h = self:get_size()
     local scr_w, scr_h = love.graphics.getDimensions()
 
-    return x + w >= 0 and x < scr_w and y + h >= 0 and y < scr_h
+    return x + w >= 0 and x < self.ui.w and y + h >= 0 and y < self.ui.h
 end
 
 function panel:draw()

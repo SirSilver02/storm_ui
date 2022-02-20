@@ -59,7 +59,12 @@ function ui.get_elements()
     return env.elements
 end
 
-function ui:init()
+--overridable func, for scaled video games or whatever
+function ui:get_mouse_pos(x, y)
+    return x or love.mouse.getX(), y or love.mouse.getY()
+end
+
+function ui:init(w, h)
     env.elements.panel.init(self)
 
     self.ui = self
@@ -67,8 +72,8 @@ function ui:init()
 
     self.x = 0
     self.y = 0
-    self.w = self.theme.window.designed_width
-    self.h = self.theme.window.designed_height
+    self.w = w or love.graphics.getWidth()
+    self.h = h or love.graphics.getHeight()
 
     self.last_width = self.w
     self.last_height = self.h
@@ -152,7 +157,7 @@ function ui:update(dt)
         return
     end
 
-    local mx, my = love.mouse.getPosition()
+    local mx, my = self:get_mouse_pos()
 
     self.hovered_child = nil
 
@@ -240,6 +245,8 @@ end
 
 
 function ui:mousepressed(x, y, button)
+    x, y = self:get_mouse_pos(x, y)
+
     local hovered_child = self.hovered_child
 
     if hovered_child and hovered_child.mouse_enabled then
@@ -286,6 +293,8 @@ function ui:mousepressed(x, y, button)
 end
 
 function ui:mousereleased(x, y, button)
+    x, y = self:get_mouse_pos(x, y)
+
     local depressed_child = self.depressed_child
     
     if depressed_child and depressed_child.mouse_enabled then
@@ -307,6 +316,8 @@ function ui:mousereleased(x, y, button)
 end
 
 function ui:mousemoved(x, y, dx, dy)
+    x, y = self:get_mouse_pos(x, y)
+
     local depressed_child = self.depressed_child
 
     if depressed_child and depressed_child.mouse_enabled then

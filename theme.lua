@@ -5,11 +5,6 @@
 local divide_by_255 = modules.util.math.divide_by_255
 
 local theme = {
-    window = {
-        designed_width = love.graphics.getWidth(),
-        designed_height = love.graphics.getHeight()
-    },
-
     panel = {
         background_color = divide_by_255({30, 34, 33, 255}),
         outline_color = divide_by_255({0, 0, 0, 255}),

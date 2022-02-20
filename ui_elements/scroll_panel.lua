@@ -117,7 +117,7 @@ function scroll_panel:post_init()
     end)
 
     self:add_hook("on_wheelmoved", function(this, x, y)
-        local mx, my = love.mouse.getPosition()
+        local mx, my = self.ui:get_mouse_pos()
 
         local duration = 0.5
         local time_passed = 0
@@ -159,7 +159,7 @@ function scroll_panel:post_init()
 
     self:add_hook("on_update", function(this, dt)
         if self.wheel_scrolling then
-            local mx, my = love.mouse.getPosition()
+            local mx, my = self.ui:get_mouse_pos()
             local dx, dy = 0, my - self.wheel_scroll_y
 
             self.scrollbar:run_hooks("on_dragged", mx, my, dx, dy / 4)

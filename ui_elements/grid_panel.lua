@@ -13,7 +13,6 @@ local on_validate = function(self)
     for i = 1, count do
         local child = self.children[i]
         child:center_on(w / (columns + 1) * i, 100)
-        print(columns)
     end
 end
 
