@@ -11,21 +11,23 @@ function slider:post_init()
     self.slider:set_outline_radius(10, 10)
 
     self.percent = 0.5
+    self.increment = 0.1
 
     local move_slider = function(this)
-        self.slider:center_on(self:get_width() * self.percent, self:get_height() / 2)
+        local x = (self:get_width() - self.slider:get_width()) * self.percent + self.slider:get_width() / 2
+
+        --local x = self.percent * self:get_width()
+        self.slider:center_on(x, self:get_height() / 2)
     end
 
     local on_dragged = function(this, mx, my, dx, dy)
         local x, y = self:mouse_to_local(mx, my)
-        local percent = modules.util.math.clamp(x / self:get_width(), 0, 1)
+        local percent = (x - self.slider:get_width() / 2) / (self:get_width() - self.slider:get_width()) 
         self:set_percent(percent)
     end
 
     self:add_hook("on_mousepressed", function(this, mx, my, button)
-        local x, y = self:mouse_to_local(mx, my)
-        local percent = modules.util.math.clamp(x / self:get_width(), 0, 1)
-        self:set_percent(percent)
+        on_dragged(this, mx, my)
     end)
 
     self:add_hook("on_dragged", on_dragged)
@@ -34,12 +36,10 @@ function slider:post_init()
     self:add_hook("post_draw", function(this)
         local x, y = this:get_screen_pos()
         local w, h = this:get_size()
-        local old_line_width = love.graphics.getLineWidth()
+        local height = 8
 
         love.graphics.setColor(1, 1, 1)
-        love.graphics.setLineWidth(8)
-        love.graphics.line(x, y + h / 2, x + w, y + h / 2)
-        love.graphics.setLineWidth(old_line_width)
+        love.graphics.rectangle("fill", x, y + h / 2 - height / 2, w, height, height, height)
     end)
 
     self:add_hook("on_validate", function(this)
@@ -51,13 +51,27 @@ function slider:post_init()
     end)
 end
 
+--increment divisions (2 is a boolean, 100 is percentage, 1000 is a lot)
 --set line width
 --set circle radius
 --blah blah blah
 
 function slider:set_percent(percent)
-    self.percent = percent
+    --0.823 ->.8 mod by increment, floor the number, then add rounded remainder (either 0 or the value of the increment)
+
+    if self.increments then
+        local remainder = percent % self.increment
+
+
+        if remainder < self.increment then
+        --percent = modules.util.math.round()
+        end
+    end
+
+    self.percent = modules.util.math.clamp(percent, 0, 1)
     self:run_hooks("on_percent_changed", percent)
+
+    print(self.percent)
 end
 
 function slider:get_percent()

@@ -35,7 +35,7 @@ end
 
 function label:size_to_contents()
     local padding = self:get_dock_padding()
-    self.w = self.font:getWidth(self.text) + padding[1] + padding[3] 
+    self.w = self.font:getWidth(self:get_text()) + padding[1] + padding[3] 
     self.h = self.font:getHeight() + padding[2] + padding[4]
 
     if self.should_draw_text_outline then
