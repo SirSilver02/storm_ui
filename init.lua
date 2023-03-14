@@ -59,7 +59,7 @@ function ui.get_elements()
     return env.elements
 end
 
---overridable func, for scaled video games or whatever
+--overridable func, for scaled video games or whatever (VANILLA)
 function ui:get_mouse_pos(x, y)
     return x or love.mouse.getX(), y or love.mouse.getY()
 end
@@ -77,6 +77,8 @@ function ui:init(w, h)
 
     self.last_width = self.w
     self.last_height = self.h
+
+    self.should_auto_resize = true --scaling library compatability
 
     self.font = self.theme.label.font
     self.text_color = self.theme.label.text_color
@@ -315,6 +317,7 @@ function ui:mousereleased(x, y, button)
     self.mouse_button_down = nil
 end
 
+--TODO, dx, dy needs work when using vanilla library with large scroll_panels
 function ui:mousemoved(x, y, dx, dy)
     x, y = self:get_mouse_pos(x, y)
 
@@ -387,11 +390,16 @@ function ui:wheelmoved(x, y)
     end
 end
 
-function ui:resize(w, h)
-    --self:scale(w / self.last_width, h / self.last_height)
 
-    self.last_width, self.last_height = w, h
-    self.w, self.h = w, h
+
+function ui:resize(w, h)
+    if self.should_auto_resize then --set to false for compatability with vanilla
+        --self:scale(w / self.last_width, h / self.last_height)
+
+        self.last_width, self.last_height = w, h
+        self.w, self.h = w, h --this breaks scaling with vanilla
+    end
+
     self:invalidate()
     self:validate()
 end

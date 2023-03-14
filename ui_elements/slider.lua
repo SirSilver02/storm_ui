@@ -60,4 +60,8 @@ function slider:set_percent(percent)
     self:run_hooks("on_percent_changed", percent)
 end
 
+function slider:get_percent()
+    return self.percent
+end
+
 return slider

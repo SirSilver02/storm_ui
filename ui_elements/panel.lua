@@ -846,6 +846,8 @@ function panel:is_on_screen()
     local w, h = self:get_size()
     local scr_w, scr_h = love.graphics.getDimensions()
 
+
+    --return true
     return x + w >= 0 and x < self.ui.w and y + h >= 0 and y < self.ui.h
 end
 
