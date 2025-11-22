@@ -1,6 +1,6 @@
 # storm_ui
 A UI library for Love2d.
-![alt text](https://media.tenor.com/EoslL3zFqdAAAAAC/serial-experiments-lain-lain.gif)
+
 
 examples of good looking ui made with it
 
